@@ -1,0 +1,138 @@
+imports:
+    - { resource: parameters.yml }
+    - { resource: security.yml }
+    - { resource: services.yml }
+    - { resource: sonata.yml }
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# http://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    locale: en
+                        #products per page in categories and in main listings
+    product_perpage_limit: 6
+    product_path: '/uploads/Products/'
+    category_path: '/uploads/Categories/'
+
+framework:
+    #esi:             ~
+    translator:      { fallbacks: ["%locale%"] }
+    secret:          "%secret%"
+    router:
+        resource: "%kernel.root_dir%/config/routing.yml"
+        strict_requirements: ~
+    form:            ~
+    csrf_protection: ~
+    validation:      { enable_annotations: true }
+    serializer:      { enable_annotations: true }
+    templating:
+        engines: ['twig']
+    default_locale:  "%locale%"
+    trusted_hosts:   ~
+    trusted_proxies: ~
+    session:
+        # http://symfony.com/doc/current/reference/configuration/framework.html#handler-id
+        handler_id:  session.handler.native_file
+        save_path:   "%kernel.root_dir%/../var/sessions/%kernel.environment%"
+    fragments:       ~
+    http_method_override: true
+    assets: ~
+
+
+# Twig Configuration
+twig:
+    debug:            "%kernel.debug%"
+    strict_variables: "%kernel.debug%"
+    globals:
+        product_perpage_limit: '%product_perpage_limit%'
+        product_path: '%product_path%'
+        category_path: '%category_path%'
+
+# Doctrine Configuration
+doctrine:
+    dbal:
+        driver:   pdo_mysql
+        host:     "%database_host%"
+        port:     "%database_port%"
+        dbname:   "%database_name%"
+        user:     "%database_user%"
+        password: "%database_password%"
+        charset:  UTF8
+#        default_table_options:
+#            charset: utf8
+#            collate: utf8_unicode_ci
+
+
+    orm:
+        auto_generate_proxy_classes: "%kernel.debug%"
+        naming_strategy: doctrine.orm.naming_strategy.underscore
+        auto_mapping: true
+#        mappings:
+#            StoreShopBundle: ~
+#            ApplicationSonataUserBundle: ~
+#            SonataUserBundle: ~
+#            FOSUserBundle: ~
+
+# Swiftmailer Configuration
+swiftmailer:
+    transport: sendmail 
+    # "%mailer_transport%"
+    host:     /usr/bin/sendmail
+    #"%mailer_host%"
+    username:  "%mailer_user%"
+    password:  "%mailer_password%"
+    spool:     
+    #{ type: memory }
+        type: file
+        path: "%kernel.root_dir%/spool"
+
+fos_user:
+    db_driver: orm 
+    firewall_name: main
+    user_class: Store\ShopBundle\Entity\Customer
+    service:
+        mailer: fos_user.mailer.twig_swift
+        
+    from_email:
+        address:        noreply@gold.shop.local
+        sender_name:    Goldsender Robot
+        
+#rewrite regform for mine one
+    registration: 
+        form:
+            type: Store\UserBundle\Form\RegistrationType
+            # if you are using Symfony < 2.8 you should use the type name instead
+            # type: app_user_registration
+        confirmation:
+            enabled: true
+            from_email:
+                address:        noreply@gold.shop.local
+                sender_name:    Registration robot
+            template:   FOSUserBundle:Confirmation:email.txt.twig
+            
+#rewrite user/edit form for mine one
+    profile: 
+        form:
+            type: Store\UserBundle\Form\ProfileType
+
+ornicar_gravatar: ~
+# or use values vs def symbol "~"
+#    rating: g
+#    size: 80
+#    default: mm
+
+
+        
+monolog:
+    handlers:
+        # this "file_log" key could be anything
+        file_log:
+            type: stream
+            # log to var/logs/(environment).log
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            # log *all* messages (debug is lowest level)
+            level: debug
+
+        syslog_handler:
+            type: syslog
+            # log error-level messages and higher
+            level: error

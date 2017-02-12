@@ -1,0 +1,19 @@
+#shop_^---:
+#    resource: "@Shop---Bundle/Resources/config/routing.xml"
+#    prefix:   /
+
+app:
+    resource: "@StoreShopBundle/Controller/"
+    type:     annotation
+
+store_user:
+    resource: "@StoreUserBundle/Resources/config/routing.yml"
+    prefix:   /
+
+store_admin:
+    resource: "@StoreAdminBundle/Resources/config/routing.yml"
+    prefix:   /
+    
+# add mine all routing from FOS 
+fos_user:
+    resource: "@FOSUserBundle/Resources/config/routing/all.xml"
