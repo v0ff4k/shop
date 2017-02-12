@@ -1,0 +1,22 @@
+{% trans_default_domain 'FOSUserBundle' %}
+
+<div class="fos_user_user_show">
+    <p>Hi. <b>{{ user.fullname }}</b>, you role is 
+        {% if is_granted('ROLE_ADMIN') %}  admin 
+        {% elseif is_granted('ROLE_USER') %} user 
+        {% else %} guest 
+        {% endif %}
+    </p>
+    <p>{{ 'login' }}: <b>{{ user.username }}</b></p>
+    <p>{{ 'profile.show.email'|trans({}, 'FOSUserBundle') }}: <b>{{ user.email | split('@', 2)[0] }}@...</b></p>
+    <p>Address: <br /><b>{{ user.address }}</b></p>
+    <div class="user-cart">
+        <a class="" href="{{ path('order_index') }}">
+            <img class="brand" width="58" height="61" src="{{ absolute_url(asset('img/cart.png')) }}" /><br />
+            Your cart </a>
+    </div>
+    <div class="row">
+        <div class="col-sm-6"><a class="btn btn-info pull-right" href="{{ path('fos_user_profile_edit') }}">Edit profile</a></div> 
+        <div class="col-sm-6"><a class="btn btn-warning pull-left" href="{{ path('fos_user_change_password') }}">Сhange password</a></div>
+    </div>
+</div>

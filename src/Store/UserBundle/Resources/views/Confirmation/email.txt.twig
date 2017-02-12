@@ -1,0 +1,33 @@
+{# //src/Store/UserBundle/Resources/FOSUserBundle/views/Confirmation/email.txt.twig #}
+
+{% block subject %}Registraion to GOLD stote{% endblock %}
+
+{% block body_text %}
+    {% autoescape false %}
+        Hello {{ user.fullname }} !
+
+        To finish activating your account - please visit {{ confirmationUrl }}
+
+        then you can login with your {{ user.username }}/{{ user.email }} using password:{{ user.plainPassword }}
+        and can update/edit your address {{ user.address }}
+
+        Greetings,
+        the App team
+    {% endautoescape %}
+{% endblock %}
+
+{% block body_html %}
+    <html><head></head><body><br /><br />
+
+        Hello <b>{{ user.fullname }}<b> !<br /><br />
+
+        To finish activating your account - please visit <a href="{{ confirmationUrl }}">Confirmation link</a><br /><br />
+
+        then you can login with your <b>{{ user.username }}</b>/<b>{{ user.email }}</b> using password: <i>{{ user.plainPassword }}</i><br />
+        and can update/edit your address <b>{{ user.address }}</b><br /><br />
+
+        Greetings,<br />
+        the App team<br /><br />
+
+        </body></html>
+{% endblock %}

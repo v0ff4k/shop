@@ -1,0 +1,17 @@
+        {% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+            <div class="card cart">
+                <a href="{{ path('order_index') }}"><img class="brand pull-right" width="58" height="61" src="{{ absolute_url(asset('img/cart1.png')) }}"></a>
+            </div>
+            <hr />
+        {% endif%}
+        
+
+        <!-- Footer -->
+        <footer>
+            <div class="row">
+                <div class="col-lg-12">
+                    <p>Copyright &copy; Your Website 2017 </p>
+                </div>
+            </div>
+            <!-- /.row -->
+        </footer>

@@ -1,0 +1,55 @@
+{% extends 'StoreShopBundle::base.html.twig' %}
+
+{% block title %}Searching....{% endblock %}
+
+{% block body %}
+    <h1>Here is what you searching for....</h1>
+
+    <div class="row container">
+        Youare requested for "{{ request }}", and what we can find:     
+
+        <hr />
+        {# products in current or from all category #}
+
+        {% include 'StoreShopBundle::products_list.html.twig' %}
+        {# //products  #}
+
+        <div class="row" style="display: none;">
+            <div class="col-sm-8">
+                <h2>Welcome to our shop</h2>
+                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Et molestiae similique eligendi reiciendis sunt distinctio odit?</p>
+                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Et molestiae similique eligendi reiciendis sunt distinctio odit? Quia, neque, ipsa, adipisci quisquam ullam deserunt accusantium illo iste exercitationem nemo voluptates asperiores.</p>
+                <p>
+                    <a class="btn btn-default btn-lg" href="#">Call us »</a>
+                </p>
+            </div>
+            <div class="col-sm-4">
+                <h2>Contact Us</h2>
+                <address>
+                    <strong>Deep gold mining</strong>
+                    <br />51 Nowhere drive
+                    <br />Silicon Walley, CA 98765
+                    <br />
+                </address>
+                <address>
+                    <abbr title="Phone">P:</abbr>(123) 456-78-90
+                    <br />
+                    <abbr title="Email">E:</abbr> <a href="mailto:#">user@server.com</a>
+                </address>
+            </div>
+        </div>
+        <!-- //.row -->
+
+        {% include 'StoreShopBundle::footer.html.twig'%}
+
+    </div><!--//container -->
+
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function () {
+
+        });
+    </script>
+{% endblock %}

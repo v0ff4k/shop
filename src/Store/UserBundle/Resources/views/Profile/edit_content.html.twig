@@ -1,0 +1,10 @@
+
+<form action="{{ path('fos_user_profile_edit') }}" {{ form_enctype(form) }} method="POST" class="form-horizontal">
+    {{ form_row(form.fullname) }}
+    {{ form_row(form.address) }}
+
+    {{ form_widget(form) }}
+    <div>
+        <input class="btn btn-info" type="submit" value="{{ 'profile.edit.submit'|trans({}, 'FOSUserBundle') }}" />
+    </div>
+</form>        

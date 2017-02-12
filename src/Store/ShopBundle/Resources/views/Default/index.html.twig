@@ -1,0 +1,315 @@
+{% extends 'StoreShopBundle::base.html.twig' %}
+
+{% block title %}
+    {% if categoryId matches '/^\\d+$/' %}{# category info in var categories  #}
+        Superstore:: Sategory:{{ categories.title }} !{% else %}{# all or any else, show all categories #}
+        Superstore:: select your category !{% endif %}
+        {% endblock %}
+
+            {% block body %}
+                <br />
+
+
+                <header class="business-header">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <h1 class="tagline">Gold store</h1>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+                <div class="container">
+
+                    <hr />
+
+                    {% if categoryId matches '/^\\d+$/' %}
+                        {% set category = categories %}
+
+
+                        <div class="row">{# container-fluid  #}
+                            <div class=""><h2>You are in category: "<b>{{ category.title }}</b>" (#{{categoryId}}) </h2></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+
+                                {# TODO check if CATEGORY image isset + file exist and category got products ! #}
+                                <a href="{{ path('homepage') }}" title="Click here to return to main page">Home</a>
+                                <div class="spaced"></div>
+                                
+                                {# filtering #}
+                                <div class="text-right pull-right hidden-lg hidden-md"><span class="">
+                                        Currently displayed by <b>{{ column|replace({'V': " v", 'V': " v"}) }}</b><br />
+                                        in <b>{{ direction|lower  == 'desc' ? 'descending' : 'ascending' }}</b> order <br />  
+
+                                        <span class="glyphicon glyphicon-filter" aria-hidden="true"></span> availables 
+                                        <a title="sort by available in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'available' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                            title="sort by available in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'available' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+
+                                        <br /><span class="glyphicon glyphicon-filter" aria-hidden="true"></span> price  
+                                        <a title="sort by price in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'price' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                            title="sort by price in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'price' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+
+                                        <br /><span class="glyphicon glyphicon-filter" aria-hidden="true"></span> last viewed 
+                                        <a title="sort by last viewed in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'lastViewed' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                            title="sort by last viewed in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'lastViewed' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+                                    </span>&nbsp;
+                                </div>
+                                
+                                <div class="cell h-spaced img-thumbnail">
+
+                                    <div class="product">
+
+                                        <div class="img-responsive img-center table">
+                                            <img class="img" 
+                                                 src="{{ categoryPath }}thumb/{{ category.image }}"
+                                                 alt="Category: {{ category.title }}, added :{{ category.added|date('Y-m-d H:i:s') }}" />
+                                        </div>
+                                        <div class="spaced"></div>
+                                        <div>Category <b>{{ category.title }}</b></div>
+                                    </div>
+                                </div>
+
+                                <hr />
+
+                                <div>Products in this category: {{ category.products|length }}</div>
+                                
+                                <hr />
+
+                                <div class="text-right pull-right hidden-sm hidden-xs"><span class="">
+                                        Currently displayed by <b>{{ column|replace({'V': " v", 'V': " v"}) }}</b><br />
+                                        in <b>{{ direction|lower  == 'desc' ? 'descending' : 'ascending' }}</b> order <br />  
+
+                                        <span class="glyphicon glyphicon-filter" aria-hidden="true"></span> availables 
+                                        <a title="sort by available in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'available' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                            title="sort by available in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'available' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+
+                                        <br /><span class="glyphicon glyphicon-filter" aria-hidden="true"></span> price  
+                                        <a title="sort by price in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'price' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                            title="sort by price in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'price' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+
+                                        <br /><span class="glyphicon glyphicon-filter" aria-hidden="true"></span> last viewed 
+                                        <a title="sort by last viewed in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'lastViewed' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                            title="sort by last viewed in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'lastViewed' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                                class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+                                    </span>&nbsp;
+                                </div>
+
+                            </div>
+                            <div class="col-md-9">
+                                {# //category info in var categories #}  
+
+                                {# displaing products  #}
+                                <div class="header">Products in current category:</div>
+
+                                {% include 'StoreShopBundle::products_list.html.twig' %}
+                                {# //products  #}
+                            </div>
+                        </div><!--//row -->
+
+
+
+                        <div class="row footer">
+                            <div class="col-md-3">&nbsp;</div>
+                            <div class="col-md-6"> 
+
+                                <nav aria-label="...">
+                                    <ul class="pager">
+                                        <li>
+                                            {% if maxPages > 1 %}
+                                                <ul class="pagination pagination-sm">
+                                                    {# `«` arrow  #}
+                                                    <li {{ page == 1 ? 'class="disabled"' }}>
+                                                        {% set pervPage = page-1 < 1 ? 1 : page-1 %}
+                                                        <a href="{{ path('homepage', { 'page': pervPage , 'orderByCategory': category.id , 'orderByColumn': column , 'orderByDirection': direction , }) }}">«</a>
+                                                    </li>
+
+                                                    {# Render each page number #}
+                                                    {% for i in 1..maxPages %}
+                                                        <li {{ page == i ? 'class="active"' }}>
+                                                            <a href="{{ path('homepage', { 'page': i , 'orderByCategory': category.id , 'orderByColumn': column , 'orderByDirection': direction , }) }}">{{ i }}</a>
+                                                        </li>
+                                                    {% endfor %}
+
+                                                    {# `»` arrow #}
+                                                    <li {{ page == maxPages ? 'class="disabled"' }}>
+                                                        {% set lastPage = page+1 <= maxPages ? page+1 : page  %}
+                                                        <a href="{{ path('homepage', { 'page': lastPage , 'orderByCategory': category.id , 'orderByColumn': column , 'orderByDirection': direction , }) }}">»</a>
+                                                    </li>
+                                                </ul>
+                                            {% endif %}
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                            <div class="col-md-3 text-right hidden-xs hidden-sm"><span class="pull-right h6">
+                                    displayed by <b>{{ column|replace({'V': " v", 'V': " v"}) }}</b><br />
+                                    in <b>{{ direction|lower  == 'desc' ? 'descending' : 'ascending' }}</b> order <br /><br />  
+
+                                    <span class="glyphicon glyphicon-filter" aria-hidden="true"></span> availables 
+                                    <a title="sort by available in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'available' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                            class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                        title="sort by available in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'available' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                            class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+
+                                    <br /><span class="glyphicon glyphicon-filter" aria-hidden="true"></span> price  
+                                    <a title="sort by price in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'price' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                            class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                        title="sort by price in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'price' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                            class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+
+                                    <br /><span class="glyphicon glyphicon-filter" aria-hidden="true"></span> last viewed 
+                                    <a title="sort by last viewed in store in descending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'lastViewed' , 'orderByDirection': 'DESC' , }) }}"><span 
+                                            class="glyphicon glyphicon-triangle-bottom" aria-hidden="true"></span></a><a 
+                                        title="sort by last viewed in store in ascending order" href="{{ path('homepage', { 'page': page , 'orderByCategory': category.id , 'orderByColumn': 'lastViewed' , 'orderByDirection': 'ASC' , }) }}"><span 
+                                            class="glyphicon glyphicon-triangle-top" aria-hidden="true"></span></a>
+                                </span>&nbsp;</div>
+                        </div> 
+
+                    {% else %}{# all or any else, show all categories #}
+
+
+                        {# categories #}
+                        {% if categories|length > 0 %}
+                            <div class="category-row">
+                                {% for category in categories %}
+                                    <div class="pull-left cell">
+                                        <a href="{{ path('homepage', { 'page': 1 , 'orderByCategory': category.id , 'orderByColumn': column , 'orderByDirection': direction , }) }}">
+                                            <div class="image spaced">
+                                                <img class="img" 
+                                                     src="{{ categoryPath }}thumb/{{ category.image }}"
+                                                     alt="Category: {{ category.title }}, added :{{ category.added|date('Y-m-d H:i:s') }}" />
+                                            </div>
+                                            <div class="details h-spaced">{{ category.title }}</div>
+                                            <div class="spaced"></div>
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="row media" data-status="">
+                                <center>No one categories exist, plese create at least one ! </center>
+                            </div>
+                        {% endif %}
+                        {# //categories #}
+
+
+                    {% endif %}
+
+
+                    <hr />
+                    
+                    {# possible pace for --products--  #}
+
+                    <hr />
+
+                    <div class="header">last Products:</div>
+                    <div class="row last-products">
+                        {# lastProducts in current or from all category #}
+
+                        {% for product in lastProducts %}
+                            {% if product.available > 0 %}
+                                <div class="last-product pull-left cell">
+                                    <a href="{{ path('product_show', { 'id': product.id }) }}" title="{% if product.added %}Added: {{ product.added|date('d/m/y H:i:s') }}{% endif %}, {% if product.viewed %}Viewed:{{ product.viewed }} times{% endif %}, {% if product.lastViewed %}Last viewed: {{ product.lastViewed|date('d/m/y H:i:s') }} {% endif %}">
+                                        {% include 'StoreShopBundle::product_one.html.twig'%}
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <div class="clearfix"></div>
+                        {# //popularProducts #}
+                    </div>
+
+                    <hr />
+
+                    <div class="header">popular Products:</div>
+                    <div class="row popular-products">
+                        {# popularProducts in current or from all category #}
+
+                        {% for product in popularProducts %}
+                            {% if product.available > 0 %}
+                                <div class="popular-product pull-left cell">
+                                    <a href="{{ path('product_show', { 'id': product.id }) }}" title="{% if product.added %}Added: {{ product.added|date('d/m/y H:i:s') }}{% endif %}, {% if product.viewed %}Viewed:{{ product.viewed }} times{% endif %}, {% if product.lastViewed %}Last viewed: {{ product.lastViewed|date('d/m/y H:i:s') }} {% endif %}">
+                                        {% include 'StoreShopBundle::product_one.html.twig'%}
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <div class="clearfix"></div>
+                        {# //popularProducts #}
+                    </div>
+                    
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-sm-8">
+                            <h2>Welcome to our shop</h2>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Et molestiae similique eligendi reiciendis sunt distinctio odit?</p>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Et molestiae similique eligendi reiciendis sunt distinctio odit? Quia, neque, ipsa, adipisci quisquam ullam deserunt accusantium illo iste exercitationem nemo voluptates asperiores.</p>
+                        </div>
+                        <div class="col-sm-4">
+                            <h2>Contact Us</h2>
+                            <hr />
+                            <address>
+                                <strong>Deep gold mining</strong>
+                                <br />51 Nowhere drive
+                                <br />Silicon Walley, CA 98765
+                                <br />
+                            </address>
+                            <address>
+                                <abbr title="Phone">P:</abbr>(123) 456-78-90
+                                <br />
+                                <abbr title="Email">E:</abbr> <a href="mailto:#">user@server.com</a>
+                            </address>
+                        </div>
+                    </div>
+                    <!-- /.row -->
+
+                    {% include 'StoreShopBundle::footer.html.twig'%}
+
+                </div>
+
+            {% endblock %}
+
+            {% block stylesheets %}
+                <style>
+                    .blog a{text-shadow: 0 -1px #ccc, 0 1px #000; /*animation: blinker 1s linear infinite;*/}    
+                    .blog a:hover{text-shadow: 0;}
+
+                    @keyframes blinker {  
+                        50% { opacity: 0; }
+                    }
+                </style>
+            {% endblock %}
+
+
+            {% block snippet %}
+
+            {% endblock %}
+
+            {% block javascripts %}
+                <script>
+                    $(document).ready(function () {
+                        $(".navbar-brand").addClass("active");
+                    });
+
+                    $('#modal').on('hidden', function () {
+                        $("#navbar ul li").removeClass("active");
+                    });
+
+                    (function blink() {
+                        //$('.blog').delay(1200).fadeOut(600).fadeIn(300, blink); 
+                    })();
+                </script>
+            {% endblock %}

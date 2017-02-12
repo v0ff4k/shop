@@ -1,0 +1,32 @@
+{% extends "FOSUserBundle::layout.html.twig" %}
+
+{% block fos_user_content %}
+    {% include "FOSUserBundle:Registration:register_content.html.twig" %}
+{% endblock fos_user_content %}
+
+
+{% block snippet %}{% endblock %}
+
+
+{% block style %}
+            .hidden_on_login{display: none;}
+            .breadcrumb{display: none;}
+{% endblock %}
+
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function () {
+            //$(".registration").addClass("active");
+            
+            //wrap in all style
+            $(".form-horizontal > div").not("#fos_user_registration_form").addClass("form-group");
+            //wrap last, 2nd level of div's
+            $("#fos_user_registration_form > div").addClass("form-group");
+        });
+        
+        document.addEventListener("DOMContentLoaded", function (event) {
+            // $("label[for='fos_user_registration_form_username']").text('Login');
+        });
+    </script>
+{% endblock %}

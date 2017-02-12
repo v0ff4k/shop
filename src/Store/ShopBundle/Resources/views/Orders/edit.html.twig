@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Superstore :: CART :: continue checkout "{{ order.product.title }}"!
+{% endblock %}
+
+{% block body %}
+    <h1>Order checkout</h1>
+
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <h3>Checkout order: "{{ order.product.title }}"</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+
+            <div class="product spaced">
+                <div class="img-responsive img-center img-thumbnail">
+                    <div class="image spaced">
+                        {% if order.product.image|length > 0 %}
+                            <img alt="{{order.product.image|first}}" 
+                                 src="{{  product_path }}{{  order.product.image|first }}" />
+                        {% else %}
+                            <img alt="no image aveable" 
+                                 src="{{ absolute_url(asset('img/no-image-available.png')) }}">
+                        {% endif %}
+                        <div>
+                            Description: <b>{{order.product.description}}</b><br />
+                            Aveable in store: <b>{{order.product.available}}</b><br />
+                        
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="col-md-6">
+            {{ form_start(edit_form, {'method': 'post', 'attr': {'class': 'form-horizontal'}}) }}
+
+            {{ form_widget(edit_form) }}
+            <input class="btn btn-info pull-left" type="submit" value="Proceed" />
+            {{ form_end(edit_form) }}
+
+            <a class="btn btn-success pull-right" href="{{ path('order_index') }}">Back to the cart</a>
+            <center>
+                <a class="btn btn-danger" href="{{ path('order_delete', { 'id': order.id }) }}">Delete</a>
+            </center>  
+        </div>
+    </div>
+
+
+
+
+{% endblock %}
+
+{% block style %}
+
+    #store_shopbundle_order_sold{margin-left: 20px;}
+
+{% endblock %}
+
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function () {
+            //wrap in all style
+            $("#store_shopbundle_order > div").addClass("form-group");
+        });
+
+        document.addEventListener("DOMContentLoaded", function (event) {
+            // $("label[for='_username']").text('Login');
+        });
+    </script>
+{% endblock %}

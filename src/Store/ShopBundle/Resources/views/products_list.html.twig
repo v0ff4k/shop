@@ -1,0 +1,14 @@
+        {# products in current or from all category #}
+        <div class="row products">
+            {# products in current or from all category #}
+            {% for product in products %}
+                {% if product.available > 0 %}
+                    <div class="product pull-left cell">
+                        <a href="{{ path('product_show', { 'slug': product.slug }) }}" title="{% if product.added %}Added: {{ product.added|date('d/m/y H:i:s') }}{% endif %}, {% if product.viewed %}Viewed:{{ product.viewed }} times{% endif %}, {% if product.lastViewed %}Last viewed: {{ product.lastViewed|date('d/m/y H:i:s') }} {% endif %}">
+                        {% include 'StoreShopBundle::product_one.html.twig' %}
+                        </a>
+                    </div><!--//product pull-left cell -->
+                {% endif %}
+            {% endfor %}
+            <div class="clearfix"></div>
+        </div><!--//row products -->

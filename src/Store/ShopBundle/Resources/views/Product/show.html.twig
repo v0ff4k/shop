@@ -1,0 +1,120 @@
+{% extends 'StoreShopBundle::base.html.twig' %}
+
+{% block title %}
+    Superstore :: Product :: viewing "{{ product.category }}/{{ product.title }}"!
+{% endblock %}
+
+
+{% block body %}
+    <div class="container">    
+        <h1>Product</h1>
+       
+        <div class="product">
+            <div class="img-responsive img-center pull-left">
+                {# restore from committed 582ce89 #}
+                {% if product.image|length > 1 %}
+                    {% set first = product.image|first %}
+                    <div class="row-fluid pull-left">
+                        <div class="product-images h-spaced" > 
+                            <div class="carousel slide img-thumbnail" id=carousel data-ride=carousel> 
+                                <ol class="carousel-indicators background-darky img-thumbnail"> {# create image controllers #}
+                                    {% for p in product.image %}
+                                        <li data-target=#carousel data-slide-to={{ p.id }}{% if p == first %} class=active {% endif %}></li>
+                                        {% endfor %}
+                                </ol> 
+                                <div class=carousel-inner role=listbox>              
+                                    {% for i in product.image %}
+                                        <div class="item {{i.id}}{% if i == first %} active {% endif %}"> 
+                                            <img class="img-slide" style="background-image: url('{{  product_path ~ i.imagename }}');" /> 
+                                        </div> 
+                                    {% endfor %}
+                                </div> 
+
+                                <a href="#carousel" class="left carousel-control" role="button" data-slide="prev"> 
+                                    <span class="glyphicon glyphicon-chevron-left" aria-hidden=true></span> 
+                                    <span class=sr-only>Previous</span> 
+                                </a>
+                                <a href="#carousel" class="right carousel-control" role="button" data-slide="next"> 
+                                    <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span> 
+                                    <span class="sr-only">Next</span> 
+                                </a> 
+
+                            </div> 
+                        </div> 
+                    </div>  
+                {% elseif product.image|length == 1 %}
+                    <div class="image spaced">
+                        <img alt="{{product.image|first}}" class="img-responsive img-center img-thumbnail" 
+                             src="{{  product_path ~ product.image|first }}">
+                    </div>
+                {% else %}
+                    <div class="image spaced">
+                        <img alt="no image aveable" class="img-responsive img-center img-thumbnail" 
+                             src="{{ absolute_url(asset('img/no-image-available.png')) }}">
+                    </div>
+                {% endif %}
+            </div>
+
+
+            <div class="full-details" >
+                Category: <a href="{{ path('category_show', { 'slug': product.category.slug }) }}"><b>{{ product.category }} </b></a> <br /> 
+                {% if product.title %}Product: "<b>{{ product.title }}</b>" <br />{% endif %}
+                {% if product.price %}<span class="price">&nbsp;Cost: {{ product.price }}$&nbsp;</span><br />{% endif %}
+                    {% if product.description %}<hr /><div class="spaced ">{{ product.description }}</div><hr />{% endif %}
+                    {% if product.available %}<b>Available in store:</b> {{ product.available }}<br />{% endif %}
+                    {% if product.added %}<b>Added:</b> {{ product.added|date('d/m/y H:i:s') }}<br />{% endif %}
+                    {% if product.viewed %}<b>Viewed:</b> {{ product.viewed }} times<br />{% endif %}
+                    {% if product.lastViewed %}<b> Last viewed:</b> {{ product.lastViewed|date('d/m/y H:i:s') }} {% endif %}
+                
+            </div>
+                {% if is_granted("IS_AUTHENTICATED_REMEMBERED") %} 
+                    <div>
+                        <a href="{{ path('order_add', { 'id': product.id }) }}" class="btn btn-warning" title="add to cart"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> Add this product to cart </a>
+                    </div>
+                {% endif %}
+            
+        </div><!--//product pull-left cell -->
+
+        <div class="clearfix"></div>
+
+        <hr />
+
+        <hr />
+
+        <div class="pull-left">
+            <ul>
+                <li class="back2cat">
+                    <a href="{{ path('homepage', { 'page': 1 , 'orderByCategory': product.category.id  }) }}">Back to the category</a>
+                </li>
+                {% if not is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+                    <li id="add2fav" class="link-bookmark" style="display: none;">
+                        <a id="bookmarkme" href="javascript:alert('press Ctrl+D to bookmmark this page !!!')" rel="sidebar" title="Superstore :: Product :: viewing '{{ product.category }}/{{ product.title }}'"><span class="glyphicon glyphicon-star" aria-hidden="true"></span> Bookmark This Page</a>
+                    </li>
+                {% endif %}
+                <li id="back2hist" style="display: none;">
+                    <a href="javascript:history.back()"><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span> Go back in pervisios page</a>
+                </li>
+            </ul>
+        </div>
+        <div class="clearfix"></div>
+
+        <hr />
+
+        {% include 'StoreShopBundle::footer.html.twig'%}
+    </div>            
+{% endblock %}
+
+{% block style %}{% endblock %}
+
+{% block javascripts %}
+    <script>
+<!--
+        document.getElementById('add2fav').style.display = 'block';
+
+        if (history.length > 2 || document.referrer.length > 0) {
+            document.getElementById('back2hist').style.display = 'block';
+        }
+
+//-->
+    </script>
+{% endblock %}

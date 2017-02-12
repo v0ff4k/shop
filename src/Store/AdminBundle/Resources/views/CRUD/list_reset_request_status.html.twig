@@ -1,0 +1,11 @@
+{% extends 'SonataAdminBundle:CRUD:base_list_field.html.twig' %}
+{% block field %}
+{% spaceless %}
+    {% if value is empty %}
+        &nbsp;-&nbsp;
+    {% else %}
+        {{ value.date|date("d/m/Y") }}<br />
+        {{ value.date|date("H:i:s") }}
+    {% endif %}
+{% endspaceless %}
+{% endblock %}

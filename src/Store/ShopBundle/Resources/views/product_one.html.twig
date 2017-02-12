@@ -1,0 +1,38 @@
+        <div class="product">
+
+            <div class="img-responsive img-center table">
+                {% if product.image|length > 0 %}
+                    <div class="image">
+                        <img alt="{{product.image|first}}" class="img-responsive img-center" 
+                             src="{{  product_path }}thumb/{{  product.image|first }}">
+                    </div>
+                {% else %}
+                    <div class="image">
+                        <img alt="no image aveable" class="img-responsive img-center" 
+                             src="{{ absolute_url(asset('img/thumb/no-image-available.png')) }}">
+                    </div>
+                {% endif %}
+            </div>
+
+
+            <div class="{{ showfull is defined  ? 'full-details' : 'details' }}" >
+            {% if showfull is defined %}
+                <b>{{ product.category }}</b> / {% if product.title %}"<b>{{ product.title }}</b>" <br />{% endif %}
+            {% else %}
+                {% if product.title %}"<b>{{ product.title }}</b>" <br />{% endif %}
+            {% endif %}
+                {% if product.price %}<span class="price">&nbsp;Cost: {{ product.price }}$&nbsp;</span><br />{% endif %}
+                {% if showfull is defined %}   
+                    {% if product.description %}<hr /><div class="spaced ">{{ product.description }}</div><hr />{% endif %}
+                    {% if product.available %}<b>Available in store:</b> {{ product.available }}<br />{% endif %}
+                    {% if product.added %}<b>Added:</b> {{ product.added|date('d/m/y H:i:s') }}<br />{% endif %}
+                    {% if product.viewed %}<b>Viewed:</b> {{ product.viewed }} times<br />{% endif %}
+                    {% if product.lastViewed %}<b> Last viewed:</b> {{ product.lastViewed|date('d/m/y H:i:s') }} {% endif %}
+                {% endif %}
+            </div>
+            {% if showfull is defined %}
+                {% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}    
+                    <a href="{{ path('order_add', { 'id': product.id }) }}" class="btn btn-warning" title="add to cart"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> Add this product to cart </a>
+                {% endif %}
+            {% endif %}
+        </div><!--//product pull-left cell -->

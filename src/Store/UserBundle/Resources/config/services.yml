@@ -1,0 +1,15 @@
+services:
+#    store_user.example:
+#        class: Store\UserBundle\Example
+#        arguments: ["@service_id", "plain_value", "%parameter%"]
+
+    app.form.registration:
+        class: Store\UserBundle\Form\RegistrationType
+        tags:
+            - { name: form.type, alias: app_user_registration }
+         
+    app.form.edition:
+        class: Store\UserBundle\Form\ProfileType
+        tags:
+            - { name: form.type, alias: app_user_edition }
+

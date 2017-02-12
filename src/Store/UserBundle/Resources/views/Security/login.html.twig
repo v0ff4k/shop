@@ -1,0 +1,26 @@
+{% extends "FOSUserBundle::layout.html.twig" %}
+
+{% trans_default_domain 'FOSUserBundle' %}
+
+{% block fos_user_content %}
+    {{ include('FOSUserBundle:Security:login_content.html.twig') }}
+{% endblock fos_user_content %}
+
+
+{% block snippet %}{% endblock %}
+
+
+{% block style %}
+            .hidden_on_login{display: none;}
+            .breadcrumb{display: none;}
+            .main-center{max-width: 330px;}
+{% endblock %}
+
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function () {
+          //  $(".login").addClass("active");
+        });
+    </script>
+{% endblock %}
