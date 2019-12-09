@@ -1,47 +1,102 @@
-# shop
-====
+## Simple Symfony shoppingCart with some payment
 
-# Задача:
-====
+![](./docs/preview.png)
 
-Сделать магазин на симфони 2, для верстки использовать бутстрап
+### Task:
 
-# Фронтэнд:
+create shop script on symfony 4.1, using bootstrap, using multilang("en" is preferred) 
 
-*  Главная страница отображаются только новые и попупулярные товары, список категорий, поиск.
-*  Страница категории - список товаров для категории, возможность сортировать фильтровать, пагинация.
-*  Присмотр товара, карусель с картинками, возможность положить в корзину, добавить в избранное если пользователь авторизован - низкий проритет.
-*  Авторизация, всплывающее окно из хидера.
-*  Регистрация, всплывающее окно из хидера, и подтверждение аккаунта через мыло(временно настроен как сохранение).
-*  Корзина, список товаров возможность изменить количество, удалить товар из корзины, 
-   оформить заказ(нужно ввести данные пользователя ФИО, адрес доставки, доп инф), 
-   если пользователь авторизован инфа заполняется автоматически.
-*  Возможность редактировать профиль(адресс ФИО доп инфо).
+* add minifier from API for `prod` env
 
-# Бэкэнд:
-*  Логинка для админа.
-*  Добавление/Редактирование/Удаление товара.
-*  Добавление/Редактирование/Удаление Категории.
-*  Просмотр списка пользователей.
+### Main shop frontend:
 
+1) Main page: 
+    * new/popular gods
+    * category list
+    * "searching..." line
 
-## Дополнительно в админке - можеш делать только в самую последнюю очередь если все остальные пункты уже сделаны
+2) Category page:
+    * gods for current cat.
+    * filteging
+    * pagination
 
-*  Статистика продаж товаров за период
-*  Статискика Регистрации пользователей за период
-*  Статистика популярности товаров, по просмотрам за период
+3) Gods view:
+    * pic view in carusel mode
+    * able add2cart
+    * add2fav if not authorized
 
-### ТРЕБОВАНИЯ!!! ОБЯЗАТЕЛЬНО!!!
+4) Auth:
+    * in popup from header
+    * in "/login" path
 
-Код должен быть хорошего качества
-*  правельно отформатирован
-*  правельно прокоментирован
-*  не должно быть не используемого кода
-*  уделить особое внимае названю классов, переменных и т.д.
-*  контроллеры должны содержать как можно меньше кода
-*  уделить внимание названию маршрутов должны быть юзерфрендли 
+5) Reg:
+    * also popup from upthere
+    * confirmation via email(make it "spool"-ed to view links)
+
+6) Cart:
+    * gods list
+    * able to change num of them
+    * remove from cart
+    * process to payment with fullfill with:
+        * full Name
+        * full addr.
+        * addon info
+        * if user already registred, fill it from user profile. 
+
+7) UserProfile:
+    * able to change name
+    * addr
+    * addon info.
+
+#### Administrative backend:
+1) Adm manage logic
+2) CRUD gods
+2) CRUD categories
+3) User list: view,manage
+
+#### Last achievements in adm side
+
+1) Stat for selling: by spec period
+2) Stat for user: reg by period
+3) Stat for gods: by view counts
+4) add fallback to managment.html if DB/PHP/others fails.
+
+#### Must be
+
+Code must be in good condition
+*  well formatted (see full preferred in  checklist_ru.md/checklist_en.md)
+*  well commented
+*  no useless code
+*  strict class,var,function names.
+*  Thin controllers
+*  Userfriendly routes 
   
-Для проекта создаш в битбакете репозиторий, все фичи нужно делать в разных ветках, после того как какая-то фича готова 
-мержить ее в мастер, 
-код ревью будет проводиться по ветке мастер так что имей в виду.
+ Make new features in new branch. After new feature is ready merge it into the master branch
 ----------------------------------------------------------------
+
+
+
+## installation:
+----------------------------------------------------------------
+
+### Requirements
+
+- composer
+- php >= 7.4
+- webpack
+- mysql >= 5.6
+- nodeJS >= 8.11
+
+### Installation
+
+- run `git clone https://github.com/v0ff4k/shop.git .` command
+- run `composer install` command
+- run `npm install` command to install frontend dependencies
+- set `MYSQL_*` in `.env` your database connection data
+- run `php bin/console doctrine:migrations:migrate` to add las database tables
+- run `php bin/console doctrine:fixtures:load` to load default datas
+- run `yarn add --dev @symfony/webpack-encore` to exec webpack script  
+- run `yarn add webpack-notifier --dev` to 
+- run `yarn encore dev` to generate the manifest.json file
+- map host to `public` folder
+- profit
