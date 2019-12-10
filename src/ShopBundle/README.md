@@ -1,0 +1,1 @@
+Basic bundle for whole shop.

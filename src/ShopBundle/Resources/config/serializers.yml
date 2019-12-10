@@ -1,0 +1,24 @@
+#services:
+#    app.encoder.json:
+#        class: 'Symfony\Component\Serializer\Encoder\JsonEncoder'
+#
+#    app.encoder.xml:
+#        class: 'Symfony\Component\Serializer\Encoder\XmlEncoder'
+#
+#    app.normalizer.some:
+#        class: 'ShopBundle\Serializer\Normalizer\Some'
+#
+#    app.normalizer.another:
+#        class: 'ShopBundle\Serializer\Normalizer\Another'
+
+#
+#    app.serializer.default:
+#        class: 'Symfony\Component\Serializer\Serializer'
+#        arguments:
+#            0:
+#                - '@app.normalizer.some'
+#                - '@serializer.normalizer.other'
+#            1:
+#                - '@app.encoder.json'
+#                - '@app.encoder.xml'
+#

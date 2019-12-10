@@ -1,0 +1,121 @@
+{% extends 'ShopBundle::base.html.twig' %}
+
+{% block title %}
+    Superstore :: Orders :: viewing !
+{% endblock %}
+
+
+{% block body %}
+    <div class="continer theme-showcase" role="main">
+        <div class="main">
+            <div class="main-center">
+
+                <h1>Orders that was not confirmed</h1>
+
+                {% if orders|length < 1 %}
+                    <h5>Your shopping cart is empty.</h5>
+                {% else %}
+
+                    {% set rownumber = 1 %}
+                    {% set totalQuantity = 0 %}
+                    {% set totalPrice = 0 %}
+                    <div class="row">
+                        <div class="col-md-3">#</div>
+                        <div class="col-md-2">Image</div>
+                        <div class="col-md-2">Price<br />Quantity<br />Subtotal</div>
+                        <div class="col-md-4">Shipped to</div>
+                        <div class="col-md-1">Actions</div>
+                    </div>
+
+                    {% for order in orders %}
+
+
+                        <div class="row order">
+                            <div class="col-md-3 v-spaced">
+                                #{{rownumber}}{% set rownumber = rownumber + 1%}<br/>
+                                sell_ID:{{ order.id }}<br />
+                                name:{{order.product.title}}
+                            </div>
+                            <div class="col-md-2 text-right v-spaced">
+                                {% if order.product.image|length > 0 %}
+                                    <img alt="{{order.product.image|first}}" 
+                                         src="{{  product_path }}thumb/{{  order.product.image|first }}" />
+                                {% else %}
+                                    <img alt="no image aveable" 
+                                         src="{{ absolute_url(asset('img/thumb/no-image-available.png')) }}">
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 v-spaced">
+                                {% set totalForCurrent = order.product.price * order.quantity %}
+                                {% set  totalPrice = totalPrice + totalForCurrent%}
+                                {% set  totalQuantity = totalQuantity + order.quantity%}
+                                Price:{{ order.product.price }}$<br />
+                                Quantity: {{ order.quantity }}<br />
+                                &Sigma; price: {{  order.product.price * order.quantity }}$
+                            </div>
+                            <div class="col-md-4">
+                                {{ order.shipping }}<br />
+                                {% if order.created %}Added: {{ order.created|date('d/M/y') }}{% endif %}
+                                {% if order.edited %}Edited: {{ order.edited|date('d/M/y') }}{% endif %}
+                            </div>
+                            <div class="col-md-1 text-left v-spaced">
+                                {#
+                                    Aveable in store: {{ order.product.available }}<br />
+                                    You ordered: {{ order.quantity }}
+                                    #}
+                                {% if order.sold == 0 %}
+                                    {% if order.product.available >= order.quantity %}
+                                        <a class="btn btn-success" href="{{ path('order_edit', { 'id': order.id }) }}"><span class="glyphicon glyphicon-share" aria-hidden="true"></span></a><br />
+                                    {% else %}
+                                        <small class="btn-info">&nbsp; Invalid quantity!&nbsp;</small><br />
+                                    {% endif %}
+                                    <hr class="nospaced" />
+                                    <a class="btn btn-danger" href="{{ path('order_delete', { 'id': order.id }) }}"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></a><br />     
+                                {% endif %}
+
+                            </div>
+                        </div>
+
+                    {% endfor %}
+
+                    
+                    <div class="row">
+                        <div class="col-md-1">&nbsp;</div>
+                        <div class="col-md-1">&nbsp;</div>
+                        <div class="col-md-2">&nbsp;</div>
+                        <div class="col-md-3">Total quantity: {{totalQuantity}}<br />&Sigma; total: {{totalPrice}}$</div>
+                        <div class="col-md-4">&nbsp;</div>
+                        <div class="col-md-1">&nbsp;</div>
+                    </div>
+                    
+                    <div class="row spaced">Hurry, checkout untill product quantities still aveable in stock !!!</div>
+
+                {% endif %}
+
+
+                <a class="navbar-brand" href="{{ path('homepage') }}">Home of gold</a> 
+
+
+
+            </div><!--//product pull-left cell -->
+
+            <div class="clearfix"></div>
+
+            <hr />
+
+            <hr />
+
+            <hr />
+
+            {% include 'ShopBundle::footer.html.twig'%}
+        </div>  
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function () {
+
+        });
+    </script>
+{% endblock %}

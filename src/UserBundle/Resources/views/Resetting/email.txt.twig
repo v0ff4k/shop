@@ -1,0 +1,28 @@
+{% trans_default_domain 'FOSUserBundle' %}
+{% block subject %}Resetting your password{% endblock %}
+
+{% block body_text %}
+{% autoescape false %}
+Hello {{ user.fullname }}({{ user.username }}) !
+
+You can reset your password by accessing {{ confirmationUrl }}
+
+Greetings,
+the App team
+{% endautoescape %}
+{% endblock %}
+
+{% block body_html %}
+
+    <html><head></head><body><br /><br />
+
+        Hello <b>{{ user.fullname }}({{ user.username }})<b> !<br /><br />
+
+        You can reset your password by accessing <a href="{{ confirmationUrl }}">Confirmation link</a><br /><br />
+
+        Greetings,<br />
+        the App team<br /><br />
+        
+        </body></html>
+
+{% endblock %}

@@ -1,0 +1,9 @@
+services:
+#    app.twig_extension:
+#        class: ShopBundle\Twig\AppExtension
+#        arguments:
+#            - '@service_container'
+#            - '@translator'
+#        tags:
+#            - { name: twig.extension }
+

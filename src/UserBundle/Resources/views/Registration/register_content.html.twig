@@ -1,0 +1,23 @@
+{% trans_default_domain 'FOSUserBundle' %}
+
+{% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+
+    Hold a minute, you are already REGISTRED, hit some links above, and feel good !!!
+
+{% else %}
+
+    {{ form_start(form, {'method': 'post', 'action': path('fos_user_registration_register'), 'attr': {'class': 'form-horizontal'}}) }}
+
+    {{ form_row(form.fullname) }}
+    {{ form_row(form.address) }}
+
+    {{ form_widget(form) }}
+
+    <div>  
+        <input class="btn btn-success btn-lg btn-block" type="submit" value="{{ 'registration.submit'|trans }}" />
+    </div>
+
+    {{ form_end(form) }}
+
+{% endif %}
+

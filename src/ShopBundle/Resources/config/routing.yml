@@ -1,0 +1,52 @@
+homepage:
+    path:     /
+    controller: ShopBundle:Store:index
+
+
+category_show:
+    path: /category/{slug}/{page}/{orderByColumn}/{orderByDirection}
+    requirements:
+        page: '\d*'
+        orderByColumn: '\w*'
+        orderByDirection: ASC|DESC
+    defaults:
+        page: 1
+        orderByColumn: added
+        orderByDirection: DESC
+    controller: ShopBundle:Category:show
+
+#orders:
+order_index:
+    path: /order/
+    methods: get
+    controller: ShopBundle:Orders:index
+
+order_add:
+    path: /order/add/{id}
+    requirements:
+            id: '\d+'
+    methods: get
+    controller: ShopBundle:Orders:new
+
+order_edit:
+    path: /order/edit/{id}
+    requirements:
+            id: '\d+'
+    methods: [GET, POST]
+    controller: ShopBundle:Orders:edit
+
+order_delete:
+    path: /order/remove/{id}
+    requirements:
+            id: '\d+'
+    controller: ShopBundle:Orders:delete
+
+product_search:
+    path: /product/
+    methods: [GET, POST]
+    controller: ShopBundle:Product:index
+
+product_show:
+    path: /product/{slug}
+    methods: [GET]
+    controller: ShopBundle:Product:show

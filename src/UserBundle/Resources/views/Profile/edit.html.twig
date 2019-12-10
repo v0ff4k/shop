@@ -1,0 +1,26 @@
+{% extends "FOSUserBundle::layout.html.twig" %}
+
+{% block fos_user_content %}
+{% include "FOSUserBundle:Profile:edit_content.html.twig" %}
+{% endblock fos_user_content %}
+
+
+{% block snippet %}{% endblock %}
+
+
+{% block style %}
+            .main-center{max-width: 500px;}
+{% endblock %}
+
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function () {
+            $(".registration").addClass("active");
+            //wrap in all style
+            $(".form-horizontal > div").not("#fos_user_profile_form").addClass("form-group");
+            //wrap last, 2nd level of div's
+            $("#fos_user_profile_form > div").addClass("form-group");
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,13 @@
+services:
+
+    repo.product:
+        class: ShopBundle\Repository\ProductRepository
+        factory: ["@doctrine", getRepository]
+        arguments:
+            - WebBundle\Entity\Product
+
+#
+#    app.recaptcha:
+#        class: ShopBundle\Service\RecaptchaService
+#        arguments:
+#            - '@service_container'

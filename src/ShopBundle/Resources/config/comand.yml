@@ -1,0 +1,9 @@
+services:
+
+#    app.command.clear.history:
+#        class: ShopBundle\Command\ClearHistoryCommand
+#        arguments:
+#            - '@service_container'
+#        tags:
+#            - { name: console.command }
+

@@ -1,0 +1,74 @@
+# not needed
+nbproject/
+.idea/
+databases/
+public/.htaccess
+config/parameters.yml
+.htaccess
+~*
+
+#vim temp files
+*~
+
+
+###> docker ###
+.data
+###< docker ###
+
+###> symfony/framework-bundle ###
+.env.local
+/public/bundles/
+/var/
+/vendor/
+bin/.phpunit
+!/var/cache
+/var/cache/*
+!var/cache/.gitkeep
+!/var/logs
+/var/logs/*
+!var/logs/.gitkeep
+!/var/sessions
+/var/sessions/*
+!var/sessions/.gitkeep
+!var/SymfonyRequirements.php
+###< symfony/framework-bundle ###
+
+###> symfony/webpack-encore-pack ###
+/node_modules/
+/public/build/
+npm-debug.log
+yarn-error.log
+###< symfony/webpack-encore-pack ###
+
+###> symfony/phpunit-bridge ###
+.phpunit
+/phpunit.xml
+###< symfony/phpunit-bridge ###
+
+key.txt
+
+# Build data
+/web/build/*
+!/web/build/.gitkeep
+!/web/build/manifest.js
+!/web/build/manifest.json
+!/web/build/css/.gitkeep
+!/web/build/css/app.css
+!/web/build/fonts/.gitkeep
+/web/build/fonts/glyphicons-*
+/web/build/images/glyphicons-*
+!/web/build/images/.gitkeep
+!/web/build/js/.gitkeep
+/web/bundles/*
+!/web/bundles/.gitkeep
+
+# Email spool folder, in web for external grabbers
+/var/spool/*
+!/var/spool/.gitkeep
+
+# Composer PHAR
+/composer.phar
+
+# ide
+/.idea
+

@@ -1,0 +1,45 @@
+home:
+    path: /
+    controller: \App\Controller\Shop\HomeController::index
+
+cart:
+    path: /cart
+    controller: \App\Controller\Shop\CartController::index
+
+cart.addItem:
+    path: /cart/addItem/{id}
+    controller: \App\Controller\Shop\CartController::addItem
+    methods: [POST]
+
+cart.removeItem:
+    path: /cart/removeItem/{id}
+    controller: \App\Controller\Shop\CartController::removeItem
+    methods: [POST]
+
+cart.setItemQuantity:
+    path: /cart/setItemQuantity/{id}
+    controller: \App\Controller\Shop\CartController::setQuantity
+    methods: [POST]
+
+cart.clear:
+    path: /cart/clear
+    controller: \App\Controller\Shop\CartController::clear
+    methods: [POST]
+
+cart.setPayment:
+    path: /cart/setPayment
+    controller: \App\Controller\Shop\CartController::setPayment
+    methods: [POST]
+
+cart.setShipment:
+    path: /cart/setShipment
+    controller: \App\Controller\Shop\CartController::setShipment
+    methods: [POST]
+
+cart.setDiscount:
+    path: /cart/setDiscount
+    controller: \App\Controller\Shop\CartController::setDiscount
+    methods: [POST]
+
+
+

@@ -1,0 +1,43 @@
+services:
+#    store_user.example:
+#        class: UserBundle\Example
+#        arguments: ["@service_id", "plain_value", "%parameter%"]
+
+
+############## admin functions to log changes in DB ###
+#    admin.test:
+#        class: ShopBundle\Admin\SubscribeAdmin
+#        arguments: [ ~, ShopBundle\Entity\!!!!!!!!, ~]
+#        tags:
+#            - { name: sonata.admin, manager_type: orm, group: "Some name", label: LabelName }
+
+
+    store_admin.admin.category:
+        class: App\Admin\AdminBundle\Admin\CategoryAdmin
+        arguments: [~, ShopBundle\Entity\Category, SonataAdminBundle:CRUD]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Store, label: Category }
+
+    store_admin.admin.customer:
+        class: App\Admin\AdminBundle\Admin\CustomerAdmin
+        arguments: [~, ShopBundle\Entity\Customer, SonataAdminBundle:CRUD]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Customer, label: Customer }
+
+    store_admin.admin.orders:
+        class: App\Admin\AdminBundle\Admin\OrderAdmin
+        arguments: [~, ShopBundle\Entity\Orders, SonataAdminBundle:CRUD]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Store, label: Orders }
+
+    store_admin.admin.product:
+        class: App\Admin\AdminBundle\Admin\ProductAdmin
+        arguments: [~, ShopBundle\Entity\Product, SonataAdminBundle:CRUD]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Store, label: Product }
+
+    store_admin.admin.productImage:
+        class: App\Admin\AdminBundle\Admin\ProductImageAdmin
+        arguments: [~, ShopBundle\Entity\ProductImage, SonataAdminBundle:CRUD]
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Store, label: ProductImage }

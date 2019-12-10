@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<constraint-mapping xmlns="http://symfony.com/schema/dic/constraint-mapping"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://symfony.com/schema/dic/constraint-mapping
+        http://symfony.com/schema/dic/constraint-mapping/constraint-mapping-1.0.xsd">
+
+    <class name="WebBundle\Entity\User">
+        <property name="plainPassword">
+            <constraint name="Length">
+                <option name="min">5</option>
+                <option name="max">20</option>
+                <option name="minMessage">fos_user.password.short</option>
+                <option name="groups">
+                    <value>Registration</value>
+                    <value>Profile</value>
+                    <value>ResetPassword</value>
+                    <value>ChangePassword</value>
+                </option>
+            </constraint>
+        </property>
+    </class>
+</constraint-mapping>

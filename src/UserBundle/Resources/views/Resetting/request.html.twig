@@ -1,0 +1,24 @@
+{% extends "FOSUserBundle::layout.html.twig" %}
+
+{% block fos_user_content %}
+{% include "FOSUserBundle:Resetting:request_content.html.twig" %}
+{% endblock fos_user_content %}
+
+
+{% block snippet %}{% endblock %}
+
+
+{% block style %}
+            .hidden_on_login{display: none;}
+            .breadcrumb{display: none;}
+            .main-center{max-width: 500px;}
+{% endblock %}
+
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function () {
+            $(".login").addClass("active");
+        });
+    </script>
+{% endblock %}

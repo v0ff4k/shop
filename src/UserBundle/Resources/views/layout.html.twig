@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>  </title>
+        <link rel="stylesheet" href="{{ asset('css/reset.css') }}" />
+        <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('css/main.css') }}" />
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+        <style type="text/css">
+        {% block style %}{% endblock %}
+    </style>
+</head>
+<body>
+
+    <p><br /><br /></p>
+
+    <div class="panel-heading modal-header inmodalhide h-spaced">
+        <div class="panel-title text-center">
+            <h1 class="title">
+                <a class="" href="{{ path('homepage') }}">
+                    <img class="brand" width="50" height="50" src="{{ absolute_url(asset('img/logo.png')) }}">&nbsp;-&nbsp;gold</a>
+            </h1>
+        </div>
+    </div> 
+
+    <div class="breadcrumb inmodalhide">
+        <a href="{{ path('homepage') }}"> Home</a> \ 
+        {% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+            <a class="active" href="#"> profile</a> \&gt; 
+            {{ 'layout.logged_in_as'|trans({'%username%' :  ""}, 'FOSUserBundle') }} 
+            <a href="{{ path('fos_user_profile_show') }}">{{ app.user.Fullname }} </a> |
+            <a href="{{ path('fos_user_security_logout') }}">
+                {{ 'layout.logout'|trans({}, 'FOSUserBundle') }}
+            </a>
+        {% else %}
+            <a class="btn btn-info hidden_on_login" href="{{ path('fos_user_security_login') }}">{{ 'layout.login'|trans({}, 'FOSUserBundle') }}</a>
+        {% endif %}
+    </div>
+
+    <hr class="h-spaced">
+    <div class="continer theme-showcase" role="main">
+        <div class="main">
+
+        {% for type, messages in app.session.flashBag.all %}
+            {% for message in messages %}
+
+                        <div class="alerter panel panel-{{ type }} flash-{{ type }}" onClick="$(this).slideUp()">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">The result : {{ type }} <span class="pull-right">X</span></h3>
+                            </div>
+                            <div class="panel-body {{ type }}">
+			    	{{ message|trans({}, 'FOSUserBundle') }}
+			    </div>
+                        </div>
+            {% endfor %}
+        {% endfor %}
+
+            <div class="main-login main-center">
+
+            {% block fos_user_content %}{% endblock fos_user_content %}
+
+            </div><!-- /.main-login main-center -->
+
+
+            {% block body %}{% endblock %}
+
+
+        </div><!--/.row main -->
+    </div> <!-- /container -->
+
+{% block snippet %}{% endblock %} 
+
+<script src="{{ asset('js/jquery-1.11.1.min.js') }}"></script>
+<script src="{{ asset('js/bootstrap.min.js') }}"></script>
+
+{% block javascripts %}{% endblock %}
+
+<p><br /><br /></p>    
+</body>
+</html>

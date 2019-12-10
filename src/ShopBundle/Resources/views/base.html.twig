@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>{% block title %}Welcome to our goldy store!{% endblock %}</title>
+
+        <link href="//netdna.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+        <script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+        <link rel="stylesheet" href="{{ asset('css/reset.css') }}" />
+        {#<link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}" />#}
+        <link rel="stylesheet" href="{{ asset('css/main.css') }}" />
+        {#<script src="{{ asset('js/jquery-1.11.1.min.js') }}"></script>#}
+        {#<script src="{{ asset('js/bootstrap.min.js') }}"></script>#}
+
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+        {% block stylesheets %}{% endblock %}
+        <style type="text/css">
+        {% block style %}{% endblock %}
+        </style>
+        {% block head %}{% endblock %}
+    </head>
+    <body>{% include "ShopBundle::navbar.html.twig" %}
+        <p><br /><br /></p>
+        <div class="container theme-showcase" role="main">
+            
+     <!-- Main jumbotron for a primary marketing message or call to action -->
+  
+        {% block body %}{% endblock %}
+	{% block snippet %}{% endblock %}
+        
+
+        {% block javascripts %}{% endblock %}
+        
+        </div> <!-- /container -->
+    </body>
+</html>

@@ -1,0 +1,9 @@
+#not needed, kept as example couse include in main routiung !!!
+
+#store_user_homepage:
+#    path:     /
+#    defaults: { _controller: UserBundle:Default:index }
+
+#store_users:
+#    resource: "@UserBundle/Controller/"
+#    type:   annotation
