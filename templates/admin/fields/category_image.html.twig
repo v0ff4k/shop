@@ -1,0 +1,51 @@
+{# Шаблон для отображения изображения категории в списке
+
+ App\Domain\Shop\Entity\Category {#2030 ▼
+  -id: 6
+  -title: "Coins"
+  -slug: "coins"
+  -image: "categories/75/ee/75eef8a975aa6890264b067aa265397d3e8e6d121ead1ebacd56c680f81b2bc0/82b19c1fe50a759e500f50f1fa71a586.png"
+  -added: DateTimeImmutable @1482321840 {#2028 ▶}
+  -edited: DateTimeImmutable @1293818400 {#2029 ▶}
+  -products: Doctrine\ORM\PersistentCollection {#2031 ▶}
+  -parent: null
+  -children: Doctrine\ORM\PersistentCollection {#2033 ▶}
+}
+
+ -#}
+<td class="sonata-ba-list-field sonata-ba-list-field-image" objectId="1">
+    {% if object.image %}
+
+{% set code = object.image|split('/')|last|split('.')|first %}
+{# "categories/be/cf/becfcf51fe1b... ->  "categories/thumb/be/cf/becfcf51fe1b #}
+{#% set thumb = object.image|split('/')|slice(0, 1)|merge(['thumb'])|merge(object.image|split('/')|slice(1))|join('/') %#}
+{% set thumb = asset_thumb_upload(object.image) %}
+
+    <div class="{{ object.slug }}-{{ object.id }} text-center category_image">
+        <a href="#" data-toggle="modal" class="inline-block" data-target="#imageModal{{ code }}"><img
+                    src="{{ asset_upload(thumb) }}" alt="{{ object.title~'('~object.slug~')' }}"
+                    {# TODO remove style  #}
+             style="max-width: 100%; height: auto; display: block; max-height: 50px;" class="small-thumb"></a>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="imageModal{{ code }}" tabindex="-{{ object.id }}" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content border rounded-4 p-3">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    id: {{ object.id }}<br />
+                    title: {{ object.title }}<br />
+                    slug: {{ object.slug }}<br />
+                    image: {{ object.image }}<br />
+                    <img src="{{ asset_upload(object.image) }}" class="img-responsive center-block" alt="Full Size Image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+        <span class="text-muted">Нет изображения</span>
+    {% endif %}
+</td>

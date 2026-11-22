@@ -1,0 +1,27 @@
+# config/packages/html_sanitizer.yaml
+framework:
+  html_sanitizer:
+    sanitizers:
+      rtf_sanitizer:
+        # Disallow scripts, styles, objects, and critically: images
+        allow_safe_elements: false
+
+        # Explicitly list the only allowed elements
+        allow_elements:
+          'b': []
+          'i': []
+          'u': []
+          's': []
+          'em': []
+          'strong': []
+          'sub': []
+          'sup': []
+          'br': []
+          'p': []
+          'ul': []
+          'ol': []
+          'li': []
+          'a': ['href', 'target'] # Attributes allowed on links
+
+        # Strip all inline styling, IDs, and classes pasted from Word
+        drop_attributes: ['style', 'class', 'id']

@@ -1,0 +1,24 @@
+# config/packages/fos_ck_editor.yaml
+fos_ck_editor:
+  default_config: default
+  configs:
+    default:
+      # Prevents automatic wrapping of text in <p> tags
+      autoParagraph: false
+      # Keep line breaks as <br> instead of creating new paragraphs
+      enterMode: 2 # 2 == CKEDITOR.ENTER_BR (1 is <p>, 2 is <br/> 3 is <div> )
+      allowedContent: 'b i u s em strong sub sup br p ul ol li; a[!href,target];'
+        # Disallow unsafe tags, inline styles, script tags, and classes
+      disallowedContent: 'img; *[style,class,id]; script; iframe; object; form;'
+
+      # 1. Enable MS Word Clean-up Plugins
+      extraPlugins: 'pastefromword'
+      pasteFromWordPromptCleanup: false # Don't prompt the user, just do it
+      pasteFromWordRemoveFontStyles: true
+      pasteFromWordRemoveStyles: true
+
+      # Customize toolbar choices
+      toolbar:
+        - [ 'Bold', 'Italic', 'Underline', 'Strike', '-', 'Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo', '-', 'Subscript', 'Superscript' ]
+        - [ 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent' ]
+        - [ 'Format', 'RemoveFormat', 'Maximize', 'Source' ]

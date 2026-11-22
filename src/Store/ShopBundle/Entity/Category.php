@@ -1,35 +1,41 @@
 <?php
-// src/Store/ShopBundle/Entity/Categories.php
-namespace Store\ShopBundle\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
+declare(strict_types=1);
+// src/Store/ShopBundle/Entity/Categories.php
+
+namespace App\Store\ShopBundle\Entity;
+
 use Cocur\Slugify\Slugify;
+use DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 /**
  * @ORM\Entity
+ *
  * @ORM\Table(name="category")
  */
 class Category
 {
-
     /**
      * @ORM\Id
+     *
      * @ORM\Column(type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     protected $id;
 
     /**
      * @ORM\Column(name="title", type="string", length=128, unique=true)
-     */    
+     */
     protected $title;
 
     /**
      * @ORM\Column(name="slug", type="string", length=128, unique=true)
-     */    
-    protected $slug; 
-    
+     */
+    protected $slug;
+
     /**
      * @ORM\OneToMany(targetEntity="Product", mappedBy="category")
      */
@@ -39,35 +45,35 @@ class Category
      * @ORM\Column(name="image", type="string", length=128)
      */
     protected $image;
-    
-    
+
     /**
      * @ORM\Column(name="added", type="datetime", nullable=false)
      */
     protected $added;
-  
+
     /**
      * @ORM\Column(name="edited", type="datetime", nullable=false)
      */
     protected $editedDate;
-    
+
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
-        $this->products = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->products = new ArrayCollection();
         $this->added = new \DateTime();
     }
 
-    public function __toString() {
+    public function __toString()
+    {
         return $this->title;
     }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer 
+     * @return int
      */
     public function getId()
     {
@@ -75,9 +81,20 @@ class Category
     }
 
     /**
-     * Set title
+     * Get title.
+     *
+     * @return string
+     */
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+    /**
+     * Set title.
      *
      * @param string $title
+     *
      * @return Category
      */
     public function setTitle($title)
@@ -90,42 +107,44 @@ class Category
     }
 
     /**
-     * Get title
+     * Get slug.
      *
-     * @return string 
-     */
-    public function getTitle()
-    {
-        return $this->title;
-    }
-
-    /**
-     * Set slug
-     *
-     * @param string $slug
-     * @return Category
-     */
-    public function setSlug($slug)
-    {
-        $this->slug = $slug;
-        
-        return $this;
-    }
-
-    /**
-     * Get slug
-     *
-     * @return string 
+     * @return string
      */
     public function getSlug()
     {
         return $this->slug;
     }
-    
+
     /**
-     * Set image
+     * Set slug.
+     *
+     * @param string $slug
+     *
+     * @return Category
+     */
+    public function setSlug($slug)
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
+
+    /**
+     * Get image.
+     *
+     * @return string
+     */
+    public function getImage()
+    {
+        return $this->image;
+    }
+
+    /**
+     * Set image.
      *
      * @param string $image
+     *
      * @return Category
      */
     public function setImage($image)
@@ -136,19 +155,20 @@ class Category
     }
 
     /**
-     * Get image
+     * Get added.
      *
-     * @return string 
+     * @return \DateTime
      */
-    public function getImage()
+    public function getAdded()
     {
-        return $this->image;
+        return $this->added;
     }
 
     /**
-     * Set added
+     * Set added.
      *
      * @param \DateTime $added
+     *
      * @return Category
      */
     public function setAdded($added)
@@ -159,19 +179,20 @@ class Category
     }
 
     /**
-     * Get added
+     * Get editedDate.
      *
-     * @return \DateTime 
+     * @return \DateTime
      */
-    public function getAdded()
+    public function getEditedDate()
     {
-        return $this->added;
+        return $this->editedDate;
     }
 
     /**
-     * Set editedDate
+     * Set editedDate.
      *
      * @param \DateTime $editedDate
+     *
      * @return Category
      */
     public function setEditedDate($editedDate)
@@ -182,22 +203,11 @@ class Category
     }
 
     /**
-     * Get editedDate
+     * Add products.
      *
-     * @return \DateTime 
-     */
-    public function getEditedDate()
-    {
-        return $this->editedDate;
-    }
-
-    /**
-     * Add products
-     *
-     * @param \Store\ShopBundle\Entity\Product $products
      * @return Category
      */
-    public function addProduct(\Store\ShopBundle\Entity\Product $products)
+    public function addProduct(Product $products)
     {
         $this->products[] = $products;
 
@@ -205,19 +215,17 @@ class Category
     }
 
     /**
-     * Remove products
-     *
-     * @param \Store\ShopBundle\Entity\Product $products
+     * Remove products.
      */
-    public function removeProduct(\Store\ShopBundle\Entity\Product $products)
+    public function removeProduct(Product $products): void
     {
         $this->products->removeElement($products);
     }
 
     /**
-     * Get products
+     * Get products.
      *
-     * @return \Doctrine\Common\Collections\Collection 
+     * @return Collection
      */
     public function getProducts()
     {

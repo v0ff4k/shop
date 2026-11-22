@@ -1,0 +1,88 @@
+{# templates/shop/category/show.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}{{ category.title }} - {{ app_name }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    {% include 'includes/_breadcrumb.html.twig' with {
+        items: [
+            {title: 'Главная', route: 'shop_homepage'},
+            {title: 'Категории', route: 'shop_category_index'},
+            {title: category.title}
+        ]
+    } %}
+
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-3">{{ category.title }}</h1>
+            {% if category.edited %}
+                <p class="text-muted">Обновлено: {{ category.edited|date('d.m.Y H:i') }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Подкатегории #}
+    {% if subcategories|length > 0 %}
+        <div class="row mb-5">
+            <div class="col-12">
+                <h3>Подкатегории</h3>
+            </div>
+            {% for subcategory in subcategories %}
+                <div class="col-md-3 col-lg-2 mb-3">
+                    <div class="card h-100 overflow-hidden">
+                        <a href="{{ path('shop_category_show', {slug: subcategory.slug}) }}"
+                           class="text-decoration-none d-block position-relative h-100" style="padding-bottom: 70px;">
+                            {% if subcategory.image %}
+                                <div class="ratio ratio-1x1 bg-light">
+                                    <img src="{{ asset_thumb_upload(subcategory.image) }}"
+                                         class="object-fit-contain p-2" alt="{{ subcategory.title }}">
+                                </div>
+                            {% else %}
+                                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center subcategory-index-image">
+                                    <span class="text-white" style="font-size: 3rem;">{{ subcategory.title|first }}</span>
+                                </div>
+                            {% endif %}
+{#                            <div class="card text-center h-100">#}
+                                <div class="card-body text-center position-absolute bottom-0 start-0 w-100 d-flex align-items-center justify-content-center"
+                                     style="height: 70px;">
+                                    <h6 class="card-title m-0 lh-sm text-dark">{{ subcategory.title }}</h6>
+                                </div>
+{#                            </div>#}
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Товары категории #}
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Товары</h2>
+                <span class="text-muted">{{ products.total }} товаров</span>
+            </div>
+        </div>
+
+        {% if products.items|length > 0 %}
+            {% for product in products.items %}
+                {% include 'includes/_product_card.html.twig' with {product: product} %}
+            {% endfor %}
+
+            {# Пагинация #}
+            {% include 'includes/_pagination.html.twig' with {
+                currentPage: products.page,
+                totalPages: products.pages,
+                route: 'shop_category_show',
+                routeParams: {slug: category.slug}
+            } %}
+        {% else %}
+            {% include 'includes/_empty_state.html.twig' with {
+                message: 'В этой категории пока нет товаров',
+                icon: 'box-seam'
+            } %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

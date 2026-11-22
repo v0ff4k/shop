@@ -1,0 +1,14 @@
+# config/packages/jwt.yaml
+parameters:
+    jwt_secret: '%env(JWT_SECRET)%'
+    jwt_ttl: 3600
+    jwt_refresh_ttl: 604800
+
+services:
+    App\Infrastructure\Jwt\JwtService:
+        arguments:
+            $secret: '%jwt_secret%'
+            $ttl: '%jwt_ttl%'
+            $refreshTtl: '%jwt_refresh_ttl%'
+        autowire: false
+        autoconfigure: false

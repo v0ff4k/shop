@@ -1,0 +1,50 @@
+sonata_admin:
+# Available:  "assets", "breadcrumbs", "dashboard", "default_admin_services", "default_controller", "extensions", "filter_persister", "global_search", "options", "persist_filters", "search", "security", "show_mosaic_button", "templates", "title", "title_logo".
+    title: '_'
+    title_logo: img/logo.png
+
+    templates:
+        layout: 'admin/standard_layout.html.twig'
+    assets:
+        extra_javascripts:
+            - 'bundles/fosckeditor/ckeditor.js'
+        extra_stylesheets:
+            - css/bootstrap.css # bootstrap
+            - build/app.css # your css-file to add
+
+    dashboard:
+        blocks:
+            - { type: sonata.admin.block.admin_list, position: left, settings: { groups: [sonata_admin_products] } }
+            - { type: sonata.admin.block.admin_list, position: right, settings: { groups: [sonata_admin_users, sonata_admin_orders] } }
+            - { type: sonata.admin.block.admin_list, position: bottom, settings: { groups: [sonata_admin_monitoring] } }
+
+        groups:
+            sonata_admin_products:
+                label: 'Товары'
+                icon: '<i class="fa fa-shopping-bag"></i>'
+                items:
+                    - admin: store_admin.admin.product
+                    - admin: store_admin.admin.category
+                    - admin: store_admin.admin.productimage
+
+            sonata_admin_users:
+                label: 'Пользователи'
+                icon: '<i class="fa fa-users"></i>'
+                roles: [ROLE_ADMIN]
+                items:
+                    - admin: store_admin.admin.customer
+
+            sonata_admin_orders:
+                label: 'Заказы'
+                icon: '<i class="fa fa-shopping-cart"></i>'
+                items:
+                    - admin: store_admin.admin.orders
+
+            sonata_admin_monitoring:
+                label: 'Мониторинг'
+                label_catalogue: bottom
+                icon: '<i class="fa fa-dashboard"></i>'
+                items:
+                    - route: admin_monitor
+                      label: 'Системный мониторинг'
+#     Available options are "icon", "item_adds", "items", "keep_open", "label", "label_catalogue", "on_top", "provider", "roles", "translation_domain".

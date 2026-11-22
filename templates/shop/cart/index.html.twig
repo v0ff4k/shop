@@ -1,0 +1,103 @@
+{# templates/shop/cart/index.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}Корзина - {{ app_name }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1 class="mb-4">Корзина</h1>
+
+    {% if items|length > 0 %}
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        {% for item in items %}
+                            <div class="row align-items-center mb-4 pb-4 {% if not loop.last %}border-bottom{% endif %}">
+                                <div class="col-md-2">
+                                    {% if item.productImage %}
+                                        <img src="{{ asset_thumb_upload(item.productImage) }}"
+                                             class="img-fluid" alt="{{ item.productTitle }}">
+                                    {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center"
+                                             style="height: 100px;">
+                                            <span class="text-muted cart-index">Нет фото</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    <h5><a href="{{ path('shop_product_show', {slug: item.productSlug}) }}" class="text-decoration-none">{{ item.productTitle }}</a></h5>
+                                    <p class="text-muted mb-0">{{ item.productSlug }}</p>
+                                </div>
+                                <div class="col-md-2">
+                                    <p class="mb-0"><strong>{{ item.productPrice }} ₽</strong></p>
+                                </div>
+                                <div class="col-md-2">
+                                    <form action="{{ path('shop_cart_update', {productId: item.productId}) }}"
+                                          method="POST" class="d-inline">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('shop_action') }}">
+                                        <input type="number" name="quantity" value="{{ item.quantity }}"
+                                               min="1" max="{{ item.productAvailable }}"
+                                               class="form-control form-control-sm"
+                                               onchange="this.form.submit()">
+                                    </form>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <p class="mb-2"><strong>{{ item.subtotal }} ₽</strong></p>
+                                    <form action="{{ path('shop_cart_remove', {productId: item.productId}) }}"
+                                          method="POST" class="d-inline">
+                                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('shop_action') }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Итого</h5>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Товары ({{ items|length }}):</span>
+                            <strong>{{ total }} ₽</strong>
+                        </div>
+                        <a href="{{ path('shop_order_create') }}" class="btn btn-primary btn-block btn-lg">
+                            Оформить заказ
+                        </a>
+                        <a href="{{ path('shop_product_index') }}" class="btn btn-outline-secondary btn-block">
+                            Продолжить покупки
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <form action="{{ path('shop_cart_clear') }}" method="POST">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('shop_action') }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm btn-block" 
+                                    onclick="return confirm('Очистить корзину?')">
+                                <i class="bi bi-trash"></i> Очистить корзину
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-cart-x" style="font-size: 5rem; color: #ccc;"></i>
+            <h3 class="mt-4">Корзина пуста</h3>
+            <p class="text-muted">Добавьте товары из каталога</p>
+            <a href="{{ path('shop_product_index') }}" class="btn btn-primary btn-lg mt-3">
+                Перейти в каталог
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

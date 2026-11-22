@@ -1,0 +1,25 @@
+{# templates/emails/xml_import_error.html.twig #}
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Ошибка XML импорта{% endblock %}
+
+{% block content %}
+<h2>Ошибка XML импорта для {{ username }}</h2>
+
+<p>XML импорт задачи <strong>{{ jobId }}</strong> завершился с ошибкой.</p>
+
+<div class="error-box">
+    <h3>Детали ошибки:</h3>
+    <p><strong>{{ error }}</strong></p>
+</div>
+
+<p>Пожалуйста, проверьте исходный XML файл и попробуйте снова.</p>
+
+{% if filePath %}
+<p>Исходный XML файл сохранен по пути: <code>{{ filePath }}</code></p>
+{% endif %}
+
+<a href="{{ url('shop_homepage') }}" class="button">Перейти в магазин</a>
+
+<p>Если у вас возникнут вопросы, наша служба поддержки всегда готова помочь!</p>
+{% endblock %}

@@ -1,0 +1,197 @@
+{# templates/layout/app.html.twig #}
+{% import 'macros.html.twig' as macros %}
+
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="{% block meta_description %}{{ app_name }} - лучший магазин{% endblock %}">
+        <title>{% block title %}{{ app_name }}{% endblock %}</title>
+        
+        {# Favicon #}
+        <link rel="icon" href="{{ asset('favicon.ico') }}">
+        
+        {# Bootstrap 5 CSS #}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+        {{ encore_entry_link_tags('app') }}
+{#        <link href="{{ asset('bootstrap.css') }}" rel="stylesheet">#}
+
+        {% block stylesheets %}{% endblock %}
+    </head>
+    <body>
+        {# Навигация #}
+        <nav class="navbar navbar-expand-lg navbar-dark bg-gradient bg-dark mb-4">
+            <div class="container">
+                <a class="navbar-brand" href="{{ path('shop_homepage') }}">
+                    <i class="bi bi-shop"></i> {{ app_name }}
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('shop_homepage') }}">Главная</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('shop_category_index') }}">Категории</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('shop_product_index') }}">Каталог</a>
+                        </li>
+                    </ul>
+                    
+                    {# Поиск #}
+                    <div class="position-relative me-3 search-scope">
+                        <form
+                            class="d-flex"
+                            action="{{ path('shop_product_search') }}"
+                            method="GET"
+                            data-product-search-form
+                            data-suggest-url="{{ path('api_product_suggest') }}"
+                        >
+                            <input
+                                class="form-control me-2"
+                                type="search"
+                                name="q"
+                                placeholder="Поиск товаров..."
+                                aria-label="Search"
+                                value="{{ app.request.query.get('q') }}"
+                                autocomplete="off"
+                                data-product-search-input
+                            >
+                            <button class="btn btn-sm btn-outline-light" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </form>
+                        <div class="dropdown-menu search-suggestions d-none" data-product-search-suggestions></div>
+                    </div>
+                    
+                    <ul class="navbar-nav">
+                        {# Корзина #}
+                        <li class="nav-item pt-2">
+                            <nobr><a href="{{ path('shop_cart_index') }}" class="btn btn-sm me-1 btn-outline-light position-relative bg-gradient bg-success">
+                                <i class="bi bi-cart"></i> Корзина
+                                {% if cart_count > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{ cart_count }}
+                                    </span>
+                                {% endif %}
+                            </a></nobr>
+                        </li>
+                        
+                        {# Авторизация #}
+                        {% if app.user %}
+                            <li class="nav-item dropdown pt-1">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person"></i> {{ app.user.username }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ path('user_profile') }}">
+                                            <i class="bi bi-person-circle"></i> Профиль
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ path('user_orders') }}">
+                                            <i class="bi bi-box-seam"></i> Мои заказы
+                                        </a>
+                                    </li>
+                                    {% if is_granted('ROLE_ADMIN') %}
+                                        <li>
+                                            <a class="dropdown-item" href="{{ path('sonata_admin_dashboard') }}">
+                                                <i class="bi bi-gear"></i> Админка
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ path('user_logout') }}">
+                                            <i class="bi bi-box-arrow-right"></i> Выйти
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item pt-2"><nobr>
+                                <a href="{{ path('user_login') }}" class="btn btn-sm me-1 btn-outline-light">
+                                    <i class="bi bi-box-arrow-in-right"></i> Войти
+                                </a></nobr>
+                            </li>
+                            <li class="nav-item pt-2"><nobr>
+                                <a href="{{ path('user_register') }}" class="btn btn-sm me-1 btn-light">
+                                    <i class="bi bi-person-plus"></i> Регистрация
+                                </a></nobr>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        {# Сообщения (flash) #}
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="container mb-3">
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : label }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {# Основной контент #}
+        <main>
+            {% block body %}{% endblock %}
+        </main>
+
+        {# Footer #}
+        <footer class="bg-light mt-5 py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>{{ app_name }}</h5>
+                        <p class="text-muted">Магазин с <u>неограниченным</u><br /> товаром и категориями.</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>Информация</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="#about" class="text-decoration-none text-muted">О нас</a></li>
+                            <li><a href="#delivery" class="text-decoration-none text-muted">Доставка</a></li>
+                            <li><a href="#contacts" class="text-decoration-none text-muted">Контакты</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>Cоцсети</h5>
+                        <div>
+                            <a href="#" class="text-muted me-2" title="t/g"><i class="bi bi-telegram"></i></a>
+                            <a href="#" class="text-muted me-2" title="w-app"><i class="bi bi-whatsapp"></i></a>
+                            <a href="#" class="text-muted" title="insta"><i class="bi bi-instagram"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center text-muted">
+                    <small>&copy; 2016(2017) - {{ "now"|date("Y") }} {{ app_name }}. Все права защищены.</small>
+                </div>
+            </div>
+        </footer>
+
+        {# Bootstrap 5 JS #}
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+        {# jQuery (опционально) #}
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+        {{ encore_entry_script_tags('app') }}
+
+        {% block javascripts %}{% endblock %}
+    </body>
+</html>

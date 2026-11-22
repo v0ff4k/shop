@@ -1,0 +1,39 @@
+global:
+    scrape_timeout: 10s
+    evaluation_interval: 15s
+
+scrape_configs:
+    # Prometheus самосканирование
+    - job_name: 'prometheus'
+      static_configs:
+          - targets: ['localhost:9090']
+
+    # SHOP приложение - метрики через PHP endpoint (image-2-image conn-n)
+    - job_name: 'shop_app'
+      static_configs:
+          - targets: ['nginx:80']
+      metrics_path: '/metrics'
+      scrape_interval: 15s
+
+    # PostgreSQL exporter
+    - job_name: 'postgres'
+      static_configs:
+          - targets: ['postgres_exporter:9187']
+
+    # RabbitMQ  was /api/prometheus
+    - job_name: 'rabbitmq'
+      scrape_interval: 15s
+      static_configs:
+          - targets: ['rabbitmq:15692']
+      metrics_path: '/metrics'
+      basic_auth:
+          username: guest
+          password: guest
+
+    # Elasticsearch
+    - job_name: 'elasticsearch'
+      static_configs:
+          - targets: ['elasticsearch-exporter:9114']
+# old/buggy way
+#          - targets: ['elasticsearch:9200']
+#      metrics_path: '/_prometheus/metrics'

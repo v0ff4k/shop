@@ -1,0 +1,20 @@
+{# templates/includes/_breadcrumb.html.twig #}
+{#
+    Шаблон хлебных крошек
+    Параметры:
+        - items: массив элементов [{title: 'Название', route: 'маршрут', params: {}}]
+          Последний элемент считается активным (не ссылка)
+#}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        {% for item in items %}
+            {% if loop.last %}
+                <li class="breadcrumb-item active">{{ item.title }}</li>
+            {% else %}
+                <li class="breadcrumb-item">
+                    <a href="{{ path(item.route, item.params|default({})) }}">{{ item.title }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ol>
+</nav>

@@ -1,34 +1,40 @@
 <?php
-// src/Store/ShopBundle/Entity/Customer.php
-namespace Store\ShopBundle\Entity;
 
+declare(strict_types=1);
+// src/Store/ShopBundle/Entity/Customer.php
+
+namespace App\Store\ShopBundle\Entity;
+
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use FOS\UserBundle\Model\User as BaseUser;
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity
+ *
  * @ORM\Table(name="customer")
  */
 class Customer extends BaseUser
 {
+    // define constans for roles state, default in FOSUserBundle
+    public const ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN';
+    public const ROLE_ADMIN = 'ROLE_ADMIN';
+    public const ROLE_USER = 'ROLE_USER';
+    public const ROLE_SONATA_ADMIN = 'ROLE_SONATA_ADMIN';
+    public const ROLE_ALLOWED_TO_SWITCH = 'ROLE_ALLOWED_TO_SWITCH';
 
-    //define constans for roles state, default in FOSUserBundle
-    const ROLE_SUPER_ADMIN = 'ROLE_SUPER_ADMIN';
-    const ROLE_ADMIN = 'ROLE_ADMIN';
-    const ROLE_USER = 'ROLE_USER';
-    const ROLE_SONATA_ADMIN = 'ROLE_SONATA_ADMIN';
-    const ROLE_ALLOWED_TO_SWITCH = 'ROLE_ALLOWED_TO_SWITCH';
-    
     /**
      * @ORM\Id
+     *
      * @ORM\Column(type="integer")
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     protected $id;
 
     /**
      * @ORM\Column(name="fullname", type="string", length=255)
+     *
      * @Assert\Length(
      *      min = 3,
      *      max = 50,
@@ -40,7 +46,9 @@ class Customer extends BaseUser
 
     /**
      * @ORM\Column(name="address", type="string", length=255)
+     *
      * @Assert\NotBlank(message="Please enter shipping address")
+     *
      * @Assert\Length(
      *     min=20,
      *     max=255,
@@ -59,27 +67,27 @@ class Customer extends BaseUser
     {
         parent::__construct();
         // your own logic
-//        from original      
-//        $this->salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
-//        $this->enabled = false;
-//        $this->locked = false;
-//        $this->expired = false;
-//        $this->roles = array();
-//        $this->credentialsExpired = false;
-        $this->ord = new \Doctrine\Common\Collections\ArrayCollection();
+        //        from original
+        //        $this->salt = base_convert(sha1(uniqid(mt_rand(), true)), 16, 36);
+        //        $this->enabled = false;
+        //        $this->locked = false;
+        //        $this->expired = false;
+        //        $this->roles = array();
+        //        $this->credentialsExpired = false;
+        $this->ord = new ArrayCollection();
     }
 
-//    public function __toString()
-//    {
-//        //return (string) $this->getFullname();//mine
-//        //return (string) $this->getUsername();//parent
-//        parent::__toString();
-//    }
+    //    public function __toString()
+    //    {
+    //        //return (string) $this->getFullname();//mine
+    //        //return (string) $this->getUsername();//parent
+    //        parent::__toString();
+    //    }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer 
+     * @return int
      */
     public function getId()
     {
@@ -87,9 +95,20 @@ class Customer extends BaseUser
     }
 
     /**
-     * Set fullname
+     * Get fullname.
+     *
+     * @return string
+     */
+    public function getFullname()
+    {
+        return $this->fullname;
+    }
+
+    /**
+     * Set fullname.
      *
      * @param string $fullname
+     *
      * @return Customer
      */
     public function setFullname($fullname)
@@ -100,19 +119,20 @@ class Customer extends BaseUser
     }
 
     /**
-     * Get fullname
+     * Get address.
      *
-     * @return string 
+     * @return string
      */
-    public function getFullname()
+    public function getAddress()
     {
-        return $this->fullname;
+        return $this->address;
     }
 
     /**
-     * Set address
+     * Set address.
      *
      * @param string $address
+     *
      * @return Customer
      */
     public function setAddress($address)
@@ -123,22 +143,11 @@ class Customer extends BaseUser
     }
 
     /**
-     * Get address
+     * Add ord.
      *
-     * @return string 
-     */
-    public function getAddress()
-    {
-        return $this->address;
-    }
-
-    /**
-     * Add ord
-     *
-     * @param \Store\ShopBundle\Entity\Orders $ord
      * @return Customer
      */
-    public function addOrd(\Store\ShopBundle\Entity\Orders $ord)
+    public function addOrd(Orders $ord)
     {
         $this->ord[] = $ord;
 
@@ -146,19 +155,17 @@ class Customer extends BaseUser
     }
 
     /**
-     * Remove ord
-     *
-     * @param \Store\ShopBundle\Entity\Orders $ord
+     * Remove ord.
      */
-    public function removeOrd(\Store\ShopBundle\Entity\Orders $ord)
+    public function removeOrd(Orders $ord): void
     {
         $this->ord->removeElement($ord);
     }
 
     /**
-     * Get ord
+     * Get ord.
      *
-     * @return \Doctrine\Common\Collections\Collection 
+     * @return Collection
      */
     public function getOrd()
     {

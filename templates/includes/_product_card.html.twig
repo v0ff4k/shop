@@ -1,0 +1,49 @@
+{# templates/includes/_product_card.html.twig #}
+{#
+    Шаблон карточки товара
+    Параметры:
+        - product: объект продукта
+        - showAvailability: показывать ли наличие (bool, по умолчанию true)
+        - showDescription: показывать ли описание (bool, по умолчанию false)
+        - btnText: текст кнопки (по умолчанию "Подробнее")
+        - btnRoute: маршрут кнопки (по умолчанию shop_product_show)
+        - colClass: CSS класс колонки (по умолчанию "col-md-4 col-lg-3 mb-4")
+#}
+{% set showAvailability = showAvailability|default(true) %}
+{% set showDescription = showDescription|default(false) %}
+{% set btnText = btnText|default('Подробнее') %}
+{% set btnRoute = btnRoute|default('shop_product_show') %}
+{% set colClass = colClass|default('col-md-4 col-lg-3 mb-4') %}
+
+<div class="{{ colClass }}">
+    <div class="card h-100 d-flex flex-column">
+        {% include 'includes/_product_image.html.twig' with {product: product, height: 210} %}
+        
+        <div class="card-body d-flex flex-column">
+            <h6 class="card-title">{{ product.title }}</h6>
+            
+            {% if showDescription and product.description %}
+                <p class="card-text text-muted small">{{ product.description|slice(0, 100) }}...</p>
+            {% endif %}
+
+            <div class="mt-auto">
+                <p class="card-text font-weight-bold mb-1">{{ product.price }} ₽</p>
+
+                {% if product.viewed is defined %}
+                    <p class="text-muted small mb-2">👁 {{ product.viewed }}</p>
+                {% endif %}
+
+                {% if showAvailability %}
+                    <div class="m-auto">
+                        {% include 'includes/_availability_badge.html.twig' with {available: product.available, showCount: true} %}
+                    </div>
+                {% endif %}
+
+                <div class="row m-auto"><a href="{{ path(btnRoute, {slug: product.slug}) }}"
+                   class="btn btn-primary btn-sm btn-block mt-1">
+                    {{ btnText }}
+                    </a></div>
+            </div>
+        </div>
+    </div>
+</div>

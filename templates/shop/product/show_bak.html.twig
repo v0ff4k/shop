@@ -1,0 +1,185 @@
+{# templates/shop/product/show.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}{{ product.title }} - {{ app_name }}{% endblock %}
+
+{% block body %}
+<div class="container mt-3 mt-md-4">
+    {% set breadcrumbItems = [
+        {title: 'Главная', route: 'shop_homepage'},
+    ] %}
+    {% if product.category %}
+        {% set breadcrumbItems = breadcrumbItems|merge([
+            {title: product.category.title, route: 'shop_category_show', params: {slug: product.category.slug}}
+        ]) %}
+    {% endif %}
+    {% set breadcrumbItems = breadcrumbItems|merge([
+        {title: product.title}
+    ]) %}
+    {% include 'includes/_breadcrumb.html.twig' with { items: breadcrumbItems } %}
+
+    <div class="row g-3 g-md-4">
+        {# Изображения #}
+        <div class="col-12 col-md-6 mb-4">
+            <div id="productCarousel" class="carousel slide" data-bs-ride="false">
+                <div class="carousel-inner">
+                    {% if product.images|length > 0 %}
+                        {% for image in product.images %}
+                            <div class="carousel-item {{ loop.first ? 'active' : '' }}">
+                                <img src="{{ asset_upload(image.path) }}"
+                                     class="d-block w-100" alt="{{ image.alt ?: product.title }}"
+                                     style="object-fit: contain; max-height: 400px; max-height: 500px;">
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="carousel-item active">
+                            <div class="d-flex align-items-center justify-content-center bg-light" style="height: 300px;">
+                                <span class="text-muted prod-show">Нет фотографий</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                {% if product.images|length > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Предыдущее</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Следующее</span>
+                    </button>
+
+                    {# Индикаторы #}
+                    <div class="carousel-indicators position-relative mt-3">
+                        {% for image in product.images %}
+                            <button type="button" data-bs-target="#productCarousel"
+                                    data-bs-slide-to="{{ loop.index0 }}"
+                                    class="{{ loop.first ? 'active' : '' }}"
+                                    aria-current="{{ loop.first ? 'true' : '' }}"
+                                    aria-label="Изображение {{ loop.index }}">
+                            </button>
+                        {% endfor %}
+                    </div>
+
+                    {# Миниатюры #}
+                    <div class="d-flex mt-3 gap-2 overflow-auto" style="max-height: 100px;">
+                        {% for image in product.images %}
+                            <img src="{{ asset_upload(image.path) }}"
+                                 class="img-thumbnail {{ loop.first ? 'border-primary' : '' }}"
+                                 style="width: 70px; height: 70px; object-fit: cover; cursor: pointer; flex-shrink: 0;"
+                                 onclick="document.querySelector('#productCarousel .carousel-item:nth-child({{ loop.index }})').classList.add('active');
+                                          document.querySelector('#productCarousel .carousel-item:not(.active)')?.classList.remove('active');"
+                                 alt="{{ image.alt ?: product.title }}">
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Информация о товаре #}
+        <div class="col-12 col-md-6">
+            <h1 class="fs-4 fs-md-3">{{ product.title }}</h1>
+
+            <p class="text-muted small">
+                Артикул: {{ product.slug }} |
+                👁 {{ product.viewed }} |
+                Добавлен: {{ product.added|date('d.m.Y') }}
+            </p>
+
+            <div class="mb-4">
+                <h2 class="text-primary fs-5 fs-md-4">{{ product.price }} ₽</h2>
+                {% if product.available > 0 %}
+                    <span class="badge bg-success">В наличии: {{ product.available }} шт.</span>
+                {% else %}
+                    <span class="badge bg-danger">Нет в наличии</span>
+                {% endif %}
+            </div>
+
+            {# Кнопки действий #}
+            <div class="mb-4">
+                {% if product.available > 0 %}
+                    <form action="{{ path('shop_cart_add') }}" method="POST" class="d-inline w-100">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <div class="input-group mb-3">
+                            <input type="number" name="quantity" value="1" min="1"
+                                   max="{{ product.available }}" class="form-control">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart"></i> В корзину
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+
+                <button class="btn btn-outline-danger w-100 w-md-auto" type="button">
+                    <i class="fas fa-heart"></i> В избранное
+                </button>
+            </div>
+
+            {# Описание #}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0 fs-6">Описание</h5>
+                </div>
+                <div class="card-body">
+                    <p class="small">{{ product.description|nl2br }}</p>
+                </div>
+            </div>
+
+            {# Категория #}
+            <div class="mt-4">
+                <strong class="small">Категория:</strong>
+                {% if product.category %}
+                    <a href="{{ path('shop_category_show', {slug: product.category.slug}) }}">
+                        {{ product.category.title }}
+                    </a>
+                {% else %}
+                    <span class="text-muted small">Не указана</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Похожие товары (можно добавить позже) #}
+    <div class="mt-5">
+        <h3>Похожие товары</h3>
+        <p class="text-muted">Будут добавлены позже</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    // Поддержка свайпа для карусели на мобильных устройствах
+    document.addEventListener('DOMContentLoaded', function() {
+        const carousel = document.getElementById('productCarousel');
+        if (!carousel) return;
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        carousel.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        carousel.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const diff = touchStartX - touchEndX;
+            const threshold = 50; // Минимальное расстояние для свайпа
+
+            if (Math.abs(diff) > threshold) {
+                if (diff > 0) {
+                    // Свайп влево - следующее изображение
+                    bootstrap.Carousel.getOrCreateInstance(carousel).next();
+                } else {
+                    // Свайп вправо - предыдущее изображение
+                    bootstrap.Carousel.getOrCreateInstance(carousel).prev();
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

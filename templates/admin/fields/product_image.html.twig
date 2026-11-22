@@ -1,0 +1,15 @@
+{# Шаблон для отображения изображения категории в списке
+
+App\Domain\Shop\Entity\ProductImage {#2032 ▼
+  -id: 1
+  -path: "products/be/cf/becfcf51fe1b89c6df435ef7c0ed9fa0afb7a89527c0b600f9c84ec344e23875/2c00556d47ae2cf2ce4164d6774ef715.png"
+  -alt: "Russian gold 10g"
+  -position: 0
+  -product: Proxies\__CG__\App\Domain\Shop\Entity\Product {#2128 ▶}
+  -uploadedAt: DateTimeImmutable @1775646584 {#2046 ▶}
+}
+ -#}
+<td class="sonata-ba-list-field sonata-ba-list-field-path text-center align-middle product-image" objectId="1">
+    {% include 'includes/_admin_product_image.html.twig' with {object: object} %}
+</td>
+

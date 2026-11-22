@@ -1,0 +1,115 @@
+{# templates/shop/home/index.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}{{ app_name }} - Главная{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    {# Баннер #}
+    <div class="jumbotron bg-light p-5 rounded mb-4">
+        <h1 class="display-4">Добро пожаловать в {{ app_name }}!</h1>
+        <p class="lead">Лучший магазин с огромным выбором товаров.</p>
+        <hr class="my-4">
+        <a class="btn btn-primary btn-lg" href="{{ path('shop_product_index') }}" role="button">Смотреть каталог</a>
+    </div>
+
+    {# Категории #}
+    <section class="mb-5">
+        <h2 class="mb-3">Категории</h2>
+        <div class="row">
+            {% for category in categories %}
+                <div class="col-md-4 col-lg-3 mb-3">
+                    <div class="card h-100">
+                        {% if category.image %}
+                            <img src="{{ asset_thumb_upload(category.image) }}" class="card-img-top category" alt="{{ category.title }}">
+                        {% else %}
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <span class="text-white">{{ category.title|first }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ category.title }}</h5>
+                            <a href="{{ path('shop_category_show', {slug: category.slug}) }}" class="btn btn-outline-primary btn-sm">
+                                Смотреть товары
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <p class="text-muted">Категории пока не добавлены.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# Новые товары #}
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Новые товары</h2>
+            <a href="{{ path('shop_product_index') }}" class="btn btn-outline-primary">Все товары</a>
+        </div>
+        <div class="row">
+            {% for product in newProducts %}
+                <div class="col-md-3 col-lg-2 mb-4">
+                    <div class="card h-100">
+                        {% if product.images|length > 0 %}
+                            <img src="{{ asset_upload(product.images[0].path) }}" class="card-img-top prod-img" alt="{{ product.title }}">
+                        {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                <span class="text-muted home-index">Нет фото</span>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h6 class="card-title">{{ product.title }}</h6>
+                            <p class="card-text font-weight-bold">{{ product.price }} ₽</p>
+                            <a href="{{ path('shop_product_show', {slug: product.slug}) }}" class="btn btn-primary btn-sm btn-block">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <p class="text-muted">Новых товаров пока нет.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# Популярные товары #}
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Популярные товары</h2>
+            <a href="{{ path('shop_product_index', {sort_by: 'viewed', sort_order: 'desc'}) }}" class="btn btn-outline-primary">Все популярные</a>
+        </div>
+        <div class="row">
+            {% for product in popularProducts %}
+                <div class="col-md-3 col-lg-2 mb-4">
+                    <div class="card h-100">
+                        {% if product.images|length > 0 %}
+                            <img src="{{ asset_upload(product.images[0].path) }}" class="card-img-top product-image" alt="{{ product.title }}">
+                        {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                <span class="text-muted home-index2">Нет фото</span>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h6 class="card-title">{{ product.title }}</h6>
+                            <p class="card-text font-weight-bold">{{ product.price }} ₽</p>
+                            <small class="text-muted">👁 {{ product.viewed }}</small>
+                            <a href="{{ path('shop_product_show', {slug: product.slug}) }}" class="btn btn-primary btn-sm btn-block mt-2">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <p class="text-muted">Популярных товаров пока нет.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

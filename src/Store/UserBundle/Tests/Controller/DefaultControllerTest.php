@@ -1,12 +1,14 @@
 <?php
 
-namespace Store\UserBundle\Tests\Controller;
+declare(strict_types=1);
+
+namespace App\Store\UserBundle\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class DefaultControllerTest extends WebTestCase
 {
-    public function testIndex()
+    public function testIndex(): void
     {
         $client = static::createClient();
 

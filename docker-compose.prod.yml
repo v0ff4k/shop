@@ -1,0 +1,209 @@
+version: '3.8'
+
+# Production Docker Compose конфигурация
+# Все порты закрыты кроме nginx (80/443)
+# Доступ к сервисам только через внутреннюю сеть
+
+services:
+    nginx:
+        ports:
+            - "80:80"
+            # - "443:443"  # Раскомментировать для HTTPS
+        environment:
+            - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
+        volumes:
+            - ./docker/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+
+    php:
+        environment:
+            - APP_ENV=prod
+            - APP_DEBUG=0
+            - DOCTRINE_TRACING_ENABLED=0
+            - PHP_FPM_PM_CONTROL=dynamic
+            - PHP_FPM_PM_START_SERVERS=5
+            - PHP_FPM_PM_MIN_SPARE_SERVERS=5
+            - PHP_FPM_PM_MAX_SPARE_SERVERS=20
+            - PHP_FPM_PM_MAX_CHILDREN=50
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 2G
+
+    postgres:
+        # Порты НЕ открыты - доступ только из PHP
+        environment:
+            POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+            POSTGRES_DB: ${DB_NAME:-shop}
+            POSTGRES_USER: ${DB_USER:-shop_user}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data:rw
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-shop_user} -d ${DB_NAME:-shop}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        # Порт НЕ открыт - доступ только из PHP
+        command: >
+            redis-server 
+            --appendonly yes 
+            --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD required}
+            --maxmemory 256mb
+            --maxmemory-policy allkeys-lru
+        volumes:
+            - redis_data:/data:rw
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 256M
+        healthcheck:
+            test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    rabbitmq:
+        # Порты НЕ открыты - доступ только из PHP
+        environment:
+            RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?RABBITMQ_USER required}
+            RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD required}
+            RABBITMQ_DEFAULT_VHOST: /
+        volumes:
+            - rabbitmq_data:/var/lib/rabbitmq:rw
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+
+    elasticsearch:
+        # Порты НЕ открыты - доступ только из PHP
+        environment:
+            - discovery.type=single-node
+            - xpack.security.enabled=false
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        volumes:
+            - elasticsearch_data:/usr/share/elasticsearch/data:rw
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+
+    prometheus:
+        # Порт НЕ открыт - доступ через Grafana
+        volumes:
+            - ./docker/prometheus/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
+            - prometheus_data:/prometheus:rw
+        command:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--storage.tsdb.retention.time=200h'
+            - '--web.enable-lifecycle'
+            - '--web.listen-address=:9090'
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+
+    grafana:
+        # Порт НЕ открыт - доступ через nginx proxy
+        environment:
+            - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+            - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD required}
+            - GF_USERS_ALLOW_SIGN_UP=false
+            - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:23000}
+            - GF_AUTH_PROXY_ENABLED=true
+        volumes:
+            - grafana_data:/var/lib/grafana:rw
+            - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+        depends_on:
+            - prometheus
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 256M
+
+    jaeger:
+        # Порты НЕ открыты - трассировка внутри сети
+        environment:
+            - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+        networks:
+            - shop_network
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+
+networks:
+    shop_network:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.20.0.0/16
+
+volumes:
+    postgres_data:
+        driver: local
+    redis_data:
+        driver: local
+    rabbitmq_data:
+        driver: local
+    elasticsearch_data:
+        driver: local
+    prometheus_data:
+        driver: local
+    grafana_data:
+        driver: local

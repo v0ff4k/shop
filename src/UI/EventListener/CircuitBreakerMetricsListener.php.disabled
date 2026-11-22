@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\EventListener;
+
+use App\Infrastructure\External\CircuitBreaker\CircuitBreakerMetrics;
+use Redis;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+
+/**
+ * Обновляет метрики circuit breaker периодически
+ */
+class CircuitBreakerMetricsListener
+{
+    private CircuitBreakerMetrics $metrics;
+    private Redis $redis;
+    private int $updateInterval;
+    private int $lastUpdate;
+
+    public function __construct(
+        CircuitBreakerMetrics $metrics,
+        Redis                 $redis,
+        int                   $updateInterval = 60,
+    ) {
+        $this->metrics = $metrics;
+        $this->redis = $redis;
+        $this->updateInterval = $updateInterval;
+        $this->lastUpdate = 0;
+    }
+
+    /**
+     * Обновляет метрики circuit breaker при ответе на /metrics
+     */
+    public function __invoke(ResponseEvent $event): void
+    {
+        $request = $event->getRequest();
+
+        // Обновляем метрики только для endpoint /metrics
+        if ($request->getPathInfo() !== '/metrics') {
+            return;
+        }
+
+        $now = time();
+        if ($now - $this->lastUpdate >= $this->updateInterval) {
+            $this->metrics->updateAllMetrics();
+            $this->lastUpdate = $now;
+        }
+    }
+}

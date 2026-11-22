@@ -1,0 +1,23 @@
+# config/packages/elastica.yaml
+# Конфигурация для Elastica (Elasticsearch клиент)
+elastica:
+    clients:
+        default:
+            host: '%env(ELASTICSEARCH_HOST)%'
+            port: '%env(ELASTICSEARCH_PORT)%'
+            transport: 'http'
+
+    indexes:
+        products:
+            settings:
+                number_of_shards: 1
+                number_of_replicas: 0
+            mappings:
+                title: { type: text, analyzer: standard }
+                description: { type: text, analyzer: standard }
+                slug: { type: keyword }
+                price: { type: float }
+                category_id: { type: integer }
+                available: { type: integer }
+                added: { type: date }
+                viewed: { type: integer }

@@ -1,0 +1,11 @@
+{# templates/admin/crud/list_reset_request_status.html.twig #}
+{% extends '@SonataAdmin/CRUD/base_list_field.html.twig' %}
+
+{% block field %}
+    {% if value is empty %}
+        &nbsp;-&nbsp;
+    {% else %}
+        {{ value.date|date('d/m/Y') }}<br/>
+        {{ value.date|date('H:i:s') }}
+    {% endif %}
+{% endblock %}

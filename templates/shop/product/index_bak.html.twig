@@ -1,0 +1,107 @@
+{# templates/shop/product/index.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}Каталог товаров - {{ app_name }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row">
+        {# Фильтры #}
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Фильтры</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ path('shop_product_index') }}">
+                        {# Категория #}
+                        <div class="form-group mb-3">
+                            <label for="category_id">Категория</label>
+                            <select name="category_id" id="category_id" class="form-control">
+                                <option value="">Все категории</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {{ filters.categoryId == category.id ? 'selected' : '' }}>
+                                        {{ category.title }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {# Цена от #}
+                        <div class="form-group mb-3">
+                            <label for="min_price">Цена от</label>
+                            <input type="number" name="min_price" id="min_price" class="form-control" 
+                                   value="{{ filters.minPrice }}" placeholder="0">
+                        </div>
+
+                        {# Цена до #}
+                        <div class="form-group mb-3">
+                            <label for="max_price">Цена до</label>
+                            <input type="number" name="max_price" id="max_price" class="form-control" 
+                                   value="{{ filters.maxPrice }}" placeholder="100000">
+                        </div>
+
+                        {# Сортировка #}
+                        <div class="form-group mb-3">
+                            <label for="sort_by">Сортировка</label>
+                            <select name="sort_by" id="sort_by" class="form-control">
+                                <option value="added" {{ filters.sortBy == 'added' ? 'selected' : '' }}>По дате</option>
+                                <option value="price" {{ filters.sortBy == 'price' ? 'selected' : '' }}>По цене</option>
+                                <option value="title" {{ filters.sortBy == 'title' ? 'selected' : '' }}>По названию</option>
+                                <option value="viewed" {{ filters.sortBy == 'viewed' ? 'selected' : '' }}>Популярные</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="sort_order">Порядок</label>
+                            <select name="sort_order" id="sort_order" class="form-control">
+                                <option value="desc" {{ filters.sortOrder == 'desc' ? 'selected' : '' }}>По убыванию</option>
+                                <option value="asc" {{ filters.sortOrder == 'asc' ? 'selected' : '' }}>По возрастанию</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">Применить</button>
+                        <a href="{{ path('shop_product_index') }}" class="btn btn-outline-secondary btn-block">Сбросить</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {# Товары #}
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Каталог товаров</h1>
+                <span class="text-muted">{{ products.total }} товаров</span>
+            </div>
+
+            {% if products.items|length > 0 %}
+                <div class="row">
+                    {% for product in products.items %}
+                        {% include 'includes/_product_card.html.twig' with {product: product} %}
+                    {% endfor %}
+                </div>
+
+                {# Пагинация #}
+                {% include 'includes/_pagination.html.twig' with {
+                    currentPage: products.page,
+                    totalPages: products.pages,
+                    route: 'shop_product_index',
+                    routeParams: {
+                        category_id: filters.categoryId,
+                        min_price: filters.minPrice,
+                        max_price: filters.maxPrice,
+                        sort_by: filters.sortBy,
+                        sort_order: filters.sortOrder
+                    }
+                } %}
+            {% else %}
+                {% include 'includes/_empty_state.html.twig' with {
+                    message: 'Товары не найдены',
+                    subMessage: 'Попробуйте изменить параметры фильтра.',
+                    icon: 'search'
+                } %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

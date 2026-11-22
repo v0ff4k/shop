@@ -1,0 +1,33 @@
+# config/packages/prometheus.yaml
+parameters:
+    prometheus_redis_host: '%env(PROMETHEUS_REDIS_HOST)%'
+    prometheus_redis_port: '%env(PROMETHEUS_REDIS_PORT)%'
+
+services:
+    # Создаём Redis адаптер напрямую
+    Prometheus\Storage\Redis:
+        arguments:
+            - host: '%prometheus_redis_host%'
+              port: '%prometheus_redis_port%'
+              timeout: 0.1
+              read_timeout: 10
+              persistent: false
+
+    # CollectorRegistry использует Redis адаптер
+    Prometheus\CollectorRegistry:
+        arguments:
+            - '@Prometheus\Storage\Redis'
+            - false  # collectProcessTitle
+
+    # Наш кастомный сервис для работы с метриками
+    App\Infrastructure\Prometheus\PrometheusStorage:
+        arguments:
+            $registry: '@Prometheus\CollectorRegistry'
+
+    # App\UI\EventListener\PrometheusMetricsListener:
+    #     arguments:
+    #         $registry: '@Prometheus\Metrics\Registry'
+    #     tags:
+    #         - { name: kernel.event_listener, event: kernel.request, method: onRequest }
+    #         - { name: kernel.event_listener, event: kernel.response, method: onResponse }
+    #         - { name: kernel.event_listener, event: kernel.exception, method: onException }

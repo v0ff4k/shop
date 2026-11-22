@@ -1,0 +1,17 @@
+{# templates/admin/filter/json_role_filter.html.twig #}
+{% extends '@SonataAdmin/CRUD/base_filter_field.html.twig' %}
+{# solve array-2-string conversation in json fields(that exactly string(JSON) but rendering as array) #}
+{% block filter_value %}
+    {% set value = filter.form.vars.value %}
+
+    {% if value is iterable %}
+        {# Если Sonata передала массив данных формы, выводим только выбранное строковое значение #}
+        {% if value.value is defined %}
+            {{ value.value }}
+        {% else %}
+            {{ value|json_encode }}
+        {% endif %}
+    {% else %}
+        {{ value }}
+    {% endif %}
+{% endblock %}

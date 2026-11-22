@@ -1,0 +1,20 @@
+{# Шаблон для отображения изображения при просмотре товара или еще #}
+{% extends '@SonataAdmin/CRUD/base_show_field.html.twig' %}
+
+{%  set class_val = field_description.options.attr.class|default('default class') %}
+{%  set truncate = field_description.option('truncate') %}
+{%  set strip = field_description.option('strip') %}
+
+{% block field %}
+    <div class="{{ class_val }} text-center align-middle show-product-images">
+        {%- apply trim|raw %}
+        {% if value|length > 0 -%}
+            {%- for productImage in value -%}
+                {% include 'includes/_admin_product_image.html.twig' with {object: productImage, multiply: true} %}
+            {%- endfor -%}
+        {%- else %}
+            <p>[Нет изображений]</p>
+        {%- endif %}
+        {% endapply -%}
+    </div>
+{% endblock %}

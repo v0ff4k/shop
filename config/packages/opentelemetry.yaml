@@ -1,0 +1,22 @@
+# config/packages/opentelemetry.yaml
+#
+# Конфигурация OTLP-экспортёра — полностью через env-переменные (п.41 senior-чеклиста: никаких хардкодов).
+# Все настройки задаются в .env / docker-compose / CI, например:
+#   OTEL_SERVICE_NAME=shop-application
+#   OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+#   OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+#
+# SpanExporterFactory (см. OpenTelemetryTracer) сам подбирает корректный транспорт
+# (GrpcTransport / PsrTransport) на основании OTEL_EXPORTER_OTLP_PROTOCOL, что решает
+# ошибку "Received HTTP/0.9 when not allowed" при попытке слать HTTP в gRPC-порт (4317).
+
+parameters:
+    otel_service_name: '%env(OTEL_SERVICE_NAME)%'
+
+services:
+    OpenTelemetry\API\Globals:
+        class: OpenTelemetry\API\Globals
+
+    App\Infrastructure\OpenTelemetry\OpenTelemetryTracer:
+        arguments:
+            $serviceName: '%otel_service_name%'

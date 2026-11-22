@@ -1,0 +1,41 @@
+{# templates/shop/order/success.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}Заказ оформлен - {{ app_name }}{% endblock %}
+
+{% block body %}
+{#    {% if not is_granted('ORDER_EDIT', order) %}#}
+{#        Нет доступа ....#}
+{#    {% endif %}#}
+{#{% if is_granted(expression("service('App\\\\Domain\\\\Order\\\\Security\\\\OrderAccessVoter').isOrderOwner(order.id, user)")) %}#}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="alert alert-success" role="alert">
+                <i class="bi bi-check-circle" style="font-size: 4rem;"></i>
+                <h1 class="mt-3">Заказ успешно оформлен!</h1>
+                <p class="lead">Ваш номер заказа: <strong>{{ orderNumber }}</strong></p>
+                <p class="text-muted">Мы отправили подтверждение на вашу электронную почту.</p>
+            </div>
+
+            <div class="mt-4">
+                <a href="{{ path('shop_homepage') }}" class="btn btn-primary btn-lg me-2">
+                    <i class="bi bi-house"></i> На главную
+                </a>
+                <a href="{{ path('shop_product_index') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-shop"></i> В каталог
+                </a>
+            </div>
+
+            {% if app.user %}
+                <div class="mt-4">
+                    <a href="{{ path('user_profile') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-person"></i> Мои заказы в профиле
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{#{% endif %}#}
+{% endblock %}

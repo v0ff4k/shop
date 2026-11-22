@@ -1,0 +1,29 @@
+{# templates/emails/xml_export_result.html.twig
+**xml_export_result.html.twig** #}
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Результат XML экспорта{% endblock %}
+
+{% block content %}
+<h2>Результат XML экспорта для {{ username }}</h2>
+
+<p>XML экспорт задачи <strong>{{ jobId }}</strong> завершен.</p>
+
+<div class="info-box">
+    <h3>Статистика:</h3>
+    <ul>
+        <li>Экспортировано товаров: <strong>{{ productsCount }}</strong></li>
+        <li>Размер XML файла: <strong>{{ xmlLength }} байт</strong></li>
+    </ul>
+</div>
+
+{% if filePath %}
+<p>Экспортированный XML файл сохранен по пути: <code>{{ filePath }}</code></p>
+{% endif %}
+
+<p>Вы можете проверить детали задачи в разделе мониторинга задач в личном кабинете.</p>
+
+<a href="{{ url('shop_homepage') }}" class="button">Перейти в магазин</a>
+
+<p>Если у вас возникнут вопросы, наша служба поддержки всегда готова помочь!</p>
+{% endblock %}

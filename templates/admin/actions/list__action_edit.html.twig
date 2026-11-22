@@ -1,0 +1,12 @@
+{# templates/admin/actions/list__action_edit.html.twig #}
+{#{% extends '@SonataAdmin/CRUD/list__action_edit.html.twig' %}#}
+{# Force the configuration check to think it's 'icon' #}
+
+{% if admin.hasAccess('edit', object) and admin.hasRoute('edit') %}
+    <a
+        href="{{ admin.generateObjectUrl('edit', object, actions.link_parameters|default([])) }}"
+        class="btn btn-sm btn-default edit_link border rounded-2"
+        title="{{ 'action_edit'|trans({}, 'SonataAdminBundle') }}"
+    ><i class="fas fa-pencil-alt" aria-hidden="true"></i></a>
+{% endif %}
+

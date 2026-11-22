@@ -1,0 +1,248 @@
+### ============================================
+### API Тесты для SHOP приложения
+### ============================================
+### Для запуска в PhpStorm:
+### 1. Откройте этот файл
+### 2. Нажмите на зелёную стрелку рядом с запросом
+### 3. Выберите окружение (dev/staging/production)
+### ============================================
+
+### Переменные окружения берутся из http-client.env.json
+### Локальные переменные (не коммитятся) берутся из http-client.private.env.json
+
+### ============================================
+### AUTH API
+### ============================================
+
+### POST /api/login - Авторизация пользователя
+# @name login
+POST {{host}}/api/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "{{test_username}}",
+  "password": "{{test_password}}"
+}
+
+> {%
+    client.global.set("access_token", response.body.access_token);
+    client.global.set("refresh_token", response.body.refresh_token);
+    client.global.set("user_id", response.body.user.id);
+    client.log("Access Token: " + response.body.access_token.substring(0, 20) + "...");
+    client.log("User ID: " + response.body.user.id);
+%}
+
+### POST /api/login - Неверные учётные данные (должен вернуть 401)
+POST {{host}}/api/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "nonexistent_user",
+  "password": "wrong_password"
+}
+
+### POST /api/refresh - Обновление токена
+# @name refresh_token
+POST {{host}}/api/refresh
+Content-Type: application/json
+Accept: application/json
+
+{
+  "refresh_token": "{{refresh_token}}"
+}
+
+> {%
+    client.global.set("new_access_token", response.body.access_token);
+    client.global.set("new_refresh_token", response.body.refresh_token);
+    client.log("New Access Token: " + response.body.access_token.substring(0, 20) + "...");
+%}
+
+### POST /api/refresh - Неверный токен (должен вернуть 401)
+POST {{host}}/api/refresh
+Content-Type: application/json
+Accept: application/json
+
+{
+  "refresh_token": "invalid_token_here"
+}
+
+### POST /api/refresh - Отсутствует токен (должен вернуть 400)
+POST {{host}}/api/refresh
+Content-Type: application/json
+Accept: application/json
+
+{}
+
+### ============================================
+### PRODUCT API
+### ============================================
+
+### GET /api/products - Список всех продуктов
+GET {{host}}/api/products
+Accept: application/json
+
+### GET /api/products - С лимитом
+GET {{host}}/api/products?limit=5&offset=0
+Accept: application/json
+
+### GET /api/products - Поиск по названию
+GET {{host}}/api/products?search=gold
+Accept: application/json
+
+### GET /api/product/{id} - Детальная информация о продукте
+GET {{host}}/api/product/1
+Accept: application/json
+
+### GET /api/product/{id} - Несуществующий продукт (должен вернуть 404)
+GET {{host}}/api/product/999999
+Accept: application/json
+
+### ============================================
+### CIRCUIT BREAKER API
+### ============================================
+
+### GET /api/circuit-breaker/stats - Статистика всех Circuit Breaker
+GET {{host}}/api/circuit-breaker/stats
+Accept: application/json
+
+### GET /api/circuit-breaker/{service}/state - Состояние конкретного CB
+GET {{host}}/api/circuit-breaker/test_service/state
+Accept: application/json
+
+### POST /api/circuit-breaker/{service}/reset - Сброс конкретного CB
+POST {{host}}/api/circuit-breaker/test_service/reset
+Accept: application/json
+
+### POST /api/circuit-breaker/reset-all - Сброс всех CB
+POST {{host}}/api/circuit-breaker/reset-all
+Accept: application/json
+
+
+
+### ============================================
+### ADMIN MONITOR API
+### ============================================
+
+### GET /admin/monitor - Страница мониторинга
+GET {{host}}/admin/monitor
+Accept: text/html
+
+### POST /admin/monitor/clear-cache - Очистка кеша
+POST {{host}}/admin/monitor/clear-cache
+Accept: application/json
+X-Requested-With: XMLHttpRequest
+
+
+
+### ============================================
+### ЗАЩИЩЁННЫЕ МАРШРУТЫ (с токеном)
+### ============================================
+### Пример запроса с авторизацией (если есть защищённые эндпоинты)
+
+### GET /api/products - С авторизацией
+GET {{host}}/api/products
+Accept: application/json
+Authorization: Bearer {{access_token}}
+
+
+### ============================================
+### ТЕСТОВЫЕ СЦЕНАРИИ
+### ============================================
+
+### Сценарий: Полный цикл авторизации
+### 1. Логин
+# @name full_auth_login
+POST {{host}}/api/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "{{test_username}}",
+  "password": "{{test_password}}"
+}
+
+> {%
+    client.test("Login successful", function() {
+        client.assert(response.status === 200, "Response status should be 200");
+        client.assert(response.body.access_token !== undefined, "Access token should be present");
+        client.assert(response.body.refresh_token !== undefined, "Refresh token should be present");
+    });
+
+    client.global.set("test_access_token", response.body.access_token);
+    client.global.set("test_refresh_token", response.body.refresh_token);
+%}
+
+### 2. Обновление токена
+# @name full_auth_refresh
+POST {{host}}/api/refresh
+Content-Type: application/json
+Accept: application/json
+
+{
+  "refresh_token": "{{test_refresh_token}}"
+}
+
+> {%
+    client.test("Token refresh successful", function() {
+        client.assert(response.status === 200, "Response status should be 200");
+        client.assert(response.body.access_token !== undefined, "New access token should be present");
+    });
+%}
+
+### 3. Запрос продуктов с новым токеном
+GET {{host}}/api/products
+Accept: application/json
+Authorization: Bearer {{test_access_token}}
+
+> {%
+    client.test("Products request with auth", function() {
+        client.assert(response.status === 200, "Response status should be 200");
+        client.assert(response.body.products !== undefined, "Products array should be present");
+    });
+%}
+
+
+### ============================================
+### НЕГАТИВНЫЕ ТЕСТЫ
+### ============================================
+
+### GET /api/product/{id} - Неверный ID (должен вернуть ошибку)
+GET {{host}}/api/product/invalid_id
+Accept: application/json
+
+### POST /api/login - Пустое тело запроса
+POST {{host}}/api/login
+Content-Type: application/json
+Accept: application/json
+
+### POST /api/login - Неверный Content-Type
+POST {{host}}/api/login
+Content-Type: text/plain
+Accept: application/json
+
+{"username": "test", "password": "test"}
+
+### ============================================
+### ИНФОРМАЦИЯ О ТЕСТИРОВАНИИ
+### ============================================
+###
+### Доступные окружения:
+### - dev (локальная разработка)
+### - staging (тестовый сервер)
+### - production (продакшен)
+###
+### Переменные окружения:
+### - {{host}} - базовый URL API
+### - {{test_username}} - имя тестового пользователя
+### - {{test_password}} - пароль тестового пользователя
+### - {{access_token}} - токен доступа (устанавливается автоматически)
+### - {{refresh_token}} - токен обновления (устанавливается автоматически)
+###
+### Локальные переменные (не коммитятся):
+### Создайте файл http-client.private.env.json с вашими локальными
+### учётными данными. Он уже добавлен в .gitignore.
+###
+### ============================================
+

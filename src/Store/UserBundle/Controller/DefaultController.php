@@ -1,6 +1,8 @@
 <?php
 
-namespace Store\UserBundle\Controller;
+declare(strict_types=1);
+
+namespace App\Store\UserBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
@@ -8,6 +10,6 @@ class DefaultController extends Controller
 {
     public function indexAction()
     {
-        return $this->render('StoreUserBundle:Default:index.html.twig');
+        return $this->render('user/legacy/Default/index.html.twig');
     }
 }

@@ -1,0 +1,154 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\EventListener;
+
+use App\Infrastructure\Prometheus\PrometheusStorage;
+use Prometheus\CollectorRegistry;
+use Prometheus\Counter;
+use Prometheus\Gauge;
+use Prometheus\Histogram;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+/**
+ * Слушатель для сбора метрик Prometheus
+ */
+#[AsEventListener(event: KernelEvents::REQUEST, method: 'onKernelRequest')]
+#[AsEventListener(event: KernelEvents::RESPONSE, method: 'onKernelResponse')]
+#[AsEventListener(event: KernelEvents::EXCEPTION, method: 'onException')]
+final class PrometheusMetricsListener
+{
+    private CollectorRegistry $registry;
+    private Counter $requestsCounter;
+    private Gauge $requestDurationGauge;
+    private Histogram $requestDurationHistogram;
+    private Counter $exceptionsCounter;
+    private ?float $requestStartTime = null;
+
+    public function __construct(
+        PrometheusStorage $storage
+    )
+    {
+        $this->registry = $storage->getRegistry();
+
+        $this->requestsCounter = $storage->createCounter(
+            'http_requests_total',
+            'Total number of HTTP requests',
+            ['method', 'path', 'status']
+        );
+
+        $this->requestDurationGauge = $storage->createGauge(
+            'http_request_duration_seconds',
+            'HTTP request duration in seconds',
+            ['method', 'path']
+        );
+
+        $this->requestDurationHistogram = $storage->createHistogram(
+            'http_request_duration_seconds_histogram',
+            'HTTP request duration histogram',
+            ['method', 'path'],
+            [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+        );
+
+        $this->exceptionsCounter = $storage->createCounter(
+            'http_exceptions_total',
+            'Total number of HTTP exceptions',
+            ['method', 'path', 'exception']
+        );
+    }
+
+    /**
+     * Обработка начала запроса
+     */
+    public function onRequest(RequestEvent $event): void
+    {
+        if (!$event->isMainRequest()) {
+            return;
+        }
+
+        $this->requestStartTime = microtime(true);
+    }
+
+    /**
+     * Обработка ответа
+     */
+    public function onResponse(ResponseEvent $event): void
+    {
+        if (!$event->isMainRequest()) {
+            return;
+        }
+
+        $request = $event->getRequest();
+        $response = $event->getResponse();
+
+        $this->recordMetrics($request, $response->getStatusCode());
+    }
+
+    /**
+     * Запись метрик
+     */
+    private function recordMetrics(Request $request, int $statusCode): void
+    {
+        $method = $request->getMethod();
+        $path = $this->normalizePath($request->getPathInfo());
+        $labels = [$method, $path, (string)$statusCode];
+
+        // Увеличиваем счетчик запросов
+        $this->requestsCounter->inc($labels);
+
+        // Записываем длительность запроса
+        if ($this->requestStartTime !== null) {
+            $duration = microtime(true) - $this->requestStartTime;
+
+            $this->requestDurationGauge->set(
+                $duration,
+                [$method, $path]
+            );
+
+            $this->requestDurationHistogram->observe(
+                $duration,
+                [$method, $path]
+            );
+        }
+    }
+
+    /**
+     * Нормализация пути для метрик
+     */
+    private function normalizePath(string $path): string
+    {
+        // Заменяем числовые ID на плейсхолдер
+        $normalized = preg_replace('/\/\d+/', '/{id}', $path);
+        // Заменяем slug на плейсхолдер
+        $normalized = preg_replace('/\/[a-z0-9-]{3,}/', '/{slug}', $normalized);
+
+        return $normalized ?: '/';
+    }
+
+    /**
+     * Обработка исключений
+     */
+    public function onException(ExceptionEvent $event): void
+    {
+        if (!$event->isMainRequest()) {
+            return;
+        }
+
+        $request = $event->getRequest();
+        $exception = $event->getThrowable();
+
+        $this->exceptionsCounter->inc(
+            [
+                $request->getMethod(),
+                $this->normalizePath($request->getPathInfo()),
+                get_class($exception),
+            ]
+        );
+    }
+}

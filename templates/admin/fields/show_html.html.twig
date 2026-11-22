@@ -1,0 +1,33 @@
+{# Шаблон для отображения изображения категории в списке
+alsmost same as  @SonataAdmin/CRUD/show_html.html.twig  vars: value, truncate, strip  + object
+#}
+{% extends '@SonataAdmin/CRUD/base_show_field.html.twig' %}
+
+{%  set class_val = field_description.options.attr.class|default('default class') %}
+{%  set title_val = field_description.options.attr.title|default('') %}
+{%  set truncate = field_description.option('truncate') %}
+{%  set strip = field_description.option('strip') %}
+
+{% block field %}
+<div class="{{ class_val }}" title="{{ title_val }}">
+
+        {%- apply trim|raw %}
+            {%- if value is empty -%}
+                &nbsp;
+            {% else %}
+                {%- if truncate|default(null) -%}
+                    {% set length = truncate.length|default(30) %}
+                    {% set cut = truncate.cut ?? true %}
+                    {% set ellipsis = truncate.ellipsis|default('...') %}
+                    {{ value|striptags|u.truncate(length, ellipsis, cut)|raw }}
+                {%- else -%}
+                    {%- if strip|default(false) -%}
+                        {% set value = value|striptags %}
+                    {%- endif -%}
+                    {{ value|raw }}
+                {% endif %}
+            {% endif %}
+        {% endapply -%}
+
+</div>
+{% endblock %}

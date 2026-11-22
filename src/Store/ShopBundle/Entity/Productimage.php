@@ -1,26 +1,31 @@
 <?php
-// src/Store/ShopBundle/Entity/Productimage.php
-namespace Store\ShopBundle\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
+declare(strict_types=1);
+// src/Store/ShopBundle/Entity/Productimage.php
+
+namespace App\Store\ShopBundle\Entity;
+
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity
+ *
  * @ORM\Table(name="productimage")
  */
 class Productimage
 {
-
     /**
      * @ORM\Column(type="integer")
+     *
      * @ORM\Id
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     protected $id;
 
     /**
      * @ORM\ManyToOne(targetEntity="Product", inversedBy="image")
+     *
      * @ORM\JoinColumn(name="product", referencedColumnName="id")
      */
     protected $product;
@@ -31,11 +36,11 @@ class Productimage
     protected $imagename;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
-        $this->imagename = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->imagename = new ArrayCollection();
     }
 
     public function __toString()
@@ -44,19 +49,20 @@ class Productimage
     }
 
     /**
-     * Get id
+     * Get imagename.
      *
-     * @return integer 
+     * @return string
      */
-    public function getId()
+    public function getImagename()
     {
-        return $this->id;
+        return $this->imagename;
     }
 
     /**
-     * Set imagename
+     * Set imagename.
      *
      * @param string $imagename
+     *
      * @return Productimage
      */
     public function setImagename($imagename)
@@ -67,35 +73,34 @@ class Productimage
     }
 
     /**
-     * Get imagename
+     * Get id.
      *
-     * @return string 
+     * @return int
      */
-    public function getImagename()
+    public function getId()
     {
-        return $this->imagename;
+        return $this->id;
     }
 
     /**
-     * Set product
+     * Get product.
      *
-     * @param \Store\ShopBundle\Entity\Product $product
-     * @return Productimage
-     */
-    public function setProduct(\Store\ShopBundle\Entity\Product $product = null)
-    {
-        $this->product = $product;
-
-        return $this;
-    }
-
-    /**
-     * Get product
-     *
-     * @return \Store\ShopBundle\Entity\Product 
+     * @return Product
      */
     public function getProduct()
     {
         return $this->product;
+    }
+
+    /**
+     * Set product.
+     *
+     * @return Productimage
+     */
+    public function setProduct(?Product $product = null)
+    {
+        $this->product = $product;
+
+        return $this;
     }
 }

@@ -1,0 +1,8 @@
+# config/packages/mailer.yaml
+framework:
+    mailer:
+        dsn: '%env(MAILER_DSN)%'
+        envelope:
+            sender: 'noreply@shop.local'
+        headers:
+            From: 'Shop <noreply@shop.local>'

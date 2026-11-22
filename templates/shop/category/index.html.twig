@@ -1,0 +1,50 @@
+{# templates/shop/category/index.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}Все категории - {{ app_name }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1 class="mb-4">Все категории</h1>
+
+    {% if categories|length > 0 %}
+        <div class="row">
+            {% for category in categories %}
+                <div class="col-md-4 col-lg-3 mb-4">
+                    <div class="card h-100 d-flex flex-column">
+                        {% if category.image %}
+                            <img src="{{ asset_thumb_upload(category.image) }}"
+                                 class="card-img-top category-index-image" alt="{{ category.title }}">
+                        {% else %}
+                            <div class="card-img-top bg-secondary bg-gradient d-flex align-items-center justify-content-center category-index-image">
+                                <span class="text-white" style="font-size: 3rem;">{{ category.title|first }}</span>
+                            </div>
+                        {% endif %}
+                        <div class="card-body h-25 text-center d-flex flex-column justify-content-center">
+                            <h5 class="card-title">{{ category.title }}</h5>
+                            <a href="{{ path('shop_category_show', {slug: category.slug}) }}" 
+                               class="btn btn-primary mt-auto">
+                                Перейти в категорию
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <p class="mb-0">Категории пока не добавлены.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .category-index-image {
+        height: 200px;
+        object-fit: contain;
+        background: #f8f9fa;
+    }
+</style>
+{% endblock %}

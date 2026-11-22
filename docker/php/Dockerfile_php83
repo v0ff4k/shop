@@ -1,0 +1,110 @@
+# Dockerfile для PHP-FPM(bullseye) старй но рабочий.
+# С необходимыми расширениями и Node.js(сжатой версией для скорости)
+FROM php:8.3-fpm-bullseye
+
+# Dockerfile для PHP-FPM(Bookworm) в более новом докере
+# FROM php:8.3-fpm
+
+# www-data already exists with UID 33 in php:8.3-fpm, ensure it's correct
+RUN usermod -u 33 www-data && groupmod -g 33 www-data
+
+# УДАЛЯЕМ проблемный скрипт очистки, который вызывает ошибку Post-Invoke
+RUN rm -f /etc/apt/apt.conf.d/docker-clean
+
+#RUN DEBIAN_FRONTEND=noninteractive \
+#    apt-get -o APT::Update::Post-Invoke=false -o APT::Update::Post-Invoke-Success=false -qq update \
+#    && apt-get install -y --no-install-recommends \
+
+# Установка системных зависимостей (включая Node.js и npm)
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get -qq update \
+    && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    libpng-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libicu-dev \
+    libzip-dev \
+    libgd-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpq-dev \
+    librabbitmq-dev \
+#    linux-headers-generic \
+    make \
+    nano \
+    htop \
+    g++ \
+    supervisor \
+    $PHPIZE_DEPS \
+#    nodejs \
+#    npm \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка PHP расширений
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+    pdo \
+    pdo_pgsql \
+    pgsql \
+    intl \
+    zip \
+    gd \
+    exif \
+    bcmath \
+    sockets
+
+# Установка Redis расширения
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
+# Установка AMQP (RabbitMQ) расширения
+RUN pecl install amqp \
+    && docker-php-ext-enable amqp
+
+# Очистка PECL кэша и удаление build зависимостей
+RUN rm -rf /tmp/pear ~/.pearrc \
+    && apt-get remove -y $PHPIZE_DEPS \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/compocker-cleaser
+
+# Создание директорий до переключения пользователя
+RUN mkdir -p /var/www/shop/var/log /var/www/shop/var/exports \
+    /var/www/shop/public/uploads/products \
+    /var/www/shop/public/uploads/categories \
+    /var/www/shop/public/uploads/users \
+    && mkdir -p /etc/supervisor/conf.d
+
+# Копирование конфигурации PHP
+COPY php.ini /usr/local/etc/php/conf.d/shop.ini
+COPY www.conf /usr/local/etc/php-fpm.d/www.conf
+
+# Копирование конфигурации supervisor (из контекста docker/php)
+COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Копирование entrypoint скрипта
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Настройка прав на директории (используем www-data UID=33)
+RUN chown -R www-data:www-data /var/www/shop/var \
+    && chmod -R 775 /var/www/shop/var
+
+# Рабочая директория
+WORKDIR /var/www/shop
+
+# Переключение на пользователя www-data (UID=33, стандартный для PHP-FPM)
+USER www-data
+
+EXPOSE 9000
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

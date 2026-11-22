@@ -1,0 +1,11 @@
+{# templates/admin/actions/list__action_delete.html.twig #}
+{#{% extends '@SonataAdmin/CRUD/list__action_delete.html.twig' %}#}
+{# Force the configuration check to think it's 'icon' #}
+
+{% if admin.hasAccess('delete', object) and admin.hasRoute('delete') %}
+    <a
+        href="{{ admin.generateObjectUrl('delete', object, actions.link_parameters|default([])) }}"
+        class="btn btn-sm btn-default delete_link border rounded-2"
+        title="{{ 'action_delete'|trans({}, 'SonataAdminBundle') }}"
+    ><i class="fas fa-times" aria-hidden="true"></i></a>
+{% endif %}

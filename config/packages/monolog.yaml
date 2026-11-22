@@ -1,0 +1,108 @@
+monolog:
+    channels:
+        - deprecation
+        - app
+        - request
+        - doctrine
+        - security
+        - payment
+        - notification
+        - twig
+        - not_found
+        - search
+
+    handlers:
+        # Основной лог - только важные события (без deprecation)
+        main:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            level: info
+            channels: ["!event", "!request", "!doctrine", "!security", "!deprecation", "!search"]
+            formatter: monolog.formatter.json
+
+        # Отдельный лог для ошибок (критично для мониторинга)
+        error_log:
+            type: stream
+            path: "%kernel.logs_dir%/error_%kernel.environment%.log"
+            level: error
+            channels: ["!deprecation"]
+            formatter: monolog.formatter.line
+
+        # Критические ошибки и исключения - отдельный файл
+        critical_log:
+            type: stream
+            path: "%kernel.logs_dir%/critical_%kernel.environment%.log"
+            level: critical
+            channels: ["!deprecation"]
+            formatter: monolog.formatter.line
+
+        # Deprecation warnings - отдельный файл (не засоряет основной лог)
+        deprecation:
+            type: stream
+            path: "%kernel.logs_dir%/deprecation_%kernel.environment%.log"
+            level: debug
+            channels: ["deprecation"]
+            max_files: 5
+            formatter: monolog.formatter.line
+
+        # Twig ошибки
+        twig:
+            type: stream
+            path: "%kernel.logs_dir%/twig_%kernel.environment%.log"
+            level: error
+            channels: ["twig"]
+            formatter: monolog.formatter.line
+
+        # Console лог
+        console:
+            type: console
+            process_psr_3_messages: false
+            channels: ["!event", "!doctrine", "!console", "!deprecation"]
+
+        # Request лог
+        request:
+            type: stream
+            path: "%kernel.logs_dir%/request_%kernel.environment%.log"
+            level: debug
+            channels: ["request"]
+            formatter: monolog.formatter.json
+
+        # Security лог
+        security:
+            type: stream
+            path: "%kernel.logs_dir%/security_%kernel.environment%.log"
+            level: info
+            channels: ["security"]
+            formatter: monolog.formatter.json
+
+        # Payment лог
+        payment:
+            type: stream
+            path: "%kernel.logs_dir%/payment_%kernel.environment%.log"
+            level: info
+            channels: ["payment"]
+            formatter: monolog.formatter.json
+
+        # Notification лог
+        notification:
+            type: stream
+            path: "%kernel.logs_dir%/notification_%kernel.environment%.log"
+            level: info
+            channels: ["notification"]
+            formatter: monolog.formatter.json
+
+        # 404 Not Found лог - для отслеживания битых ссылок
+        not_found:
+            type: stream
+            path: "%kernel.logs_dir%/not_found_%kernel.environment%.log"
+            level: warning
+            channels: ["not_found"]
+            formatter: monolog.formatter.line
+
+        # Search лог - отдельный канал для Elasticsearch/fallback диагностики
+        search:
+            type: stream
+            path: "%kernel.logs_dir%/search_%kernel.environment%.log"
+            level: info
+            channels: ["search"]
+            formatter: monolog.formatter.json

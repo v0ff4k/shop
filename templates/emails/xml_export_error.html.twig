@@ -1,0 +1,23 @@
+{# templates/emails/xml_export_error.html.twig #}
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Ошибка XML экспорта{% endblock %}
+
+{% block content %}
+<h2>Ошибка XML экспорта для {{ username }}</h2>
+
+<p>XML экспорт задачи <strong>{{ jobId }}</strong> завершился с ошибкой.</p>
+
+<div class="error-box">
+    <h3>Детали ошибки:</h3>
+    <p><strong>{{ error }}</strong></p>
+</div>
+
+{% if filePath %}
+<p>XML файл (если был создан) сохранен по пути: <code>{{ filePath }}</code></p>
+{% endif %}
+
+<a href="{{ url('shop_homepage') }}" class="button">Перейти в магазин</a>
+
+<p>Если у вас возникнут вопросы, наша служба поддержки всегда готова помочь!</p>
+{% endblock %}

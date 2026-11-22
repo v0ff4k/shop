@@ -1,0 +1,10 @@
+{# Шаблон для отображения изображения категории на странице просмотра #}
+{% if object.image %}
+{#% set thumb = asset_thumb_upload(object.image|split('/')|slice(0, 1)|merge(['thumb'])|merge(object.image|split('/')|slice(1))|join('/') %#}
+{% set thumb = asset_thumb_upload(object.image) %}
+<div class="{{ object.slug }}-{{ object.id }} inline-block category_image_show">
+    <img src="{{ asset_upload(object.image) }}" alt="{{ object.title }}" style="max-width: 20em; margin: 0.5em 3em;">
+</div>
+{% else %}
+    <span class="text-muted">Нет изображения</span>
+{% endif %}

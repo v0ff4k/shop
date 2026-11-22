@@ -1,0 +1,117 @@
+### ============================================
+### ELASTICSEARCH / SEARCH DEBUG
+### ============================================
+### Используйте `elastic_host` для прямых запросов к контейнеру shop_elasticsearch.
+### Вариант для docker-сети: http://shop_elasticsearch:9200
+### Вариант для локального проброса порта: http://localhost:9200
+### ============================================
+
+### Проверка доступности кластера Elasticsearch
+GET {{elastic_host}}/
+Accept: application/json
+
+### Статус кластера
+GET {{elastic_host}}/_cluster/health
+Accept: application/json
+
+### Список индексов
+GET {{elastic_host}}/_cat/indices/products?v
+Accept: text/plain
+
+### Поиск: plastic в title/description
+POST {{elastic_host}}/products/_search
+Content-Type: application/json
+Accept: application/json
+
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "multi_match": {
+            "query": "plastic",
+            "fields": ["title^2", "description"]
+          }
+        }
+      ]
+    }
+  },
+  "from": 0,
+  "size": 10,
+  "_source": ["id", "title", "slug", "price", "available", "category_id"]
+}
+
+### Поиск: plastic + category_id =1 ( по факту он должен быть category_id=4)
+POST {{elastic_host}}/products/_search
+Content-Type: application/json
+Accept: application/json
+
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "multi_match": {
+            "query": "plastic",
+            "fields": ["title^2", "description"]
+          }
+        }
+      ],
+      "filter": [
+        {
+          "term": {
+            "category_id": 1
+          }
+        }
+      ]
+    }
+  },
+  "from": 0,
+  "size": 10,
+  "_source": ["id", "title", "slug", "price", "available", "category_id"]
+}
+
+### Поиск: plastic + price range[1-100] + availability(есть в наличии)
+POST {{elastic_host}}/products/_search
+Content-Type: application/json
+Accept: application/json
+
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "multi_match": {
+            "query": "plastic",
+            "fields": ["title^2", "description"]
+          }
+        }
+      ],
+      "filter": [
+        {
+          "range": {
+            "price": {
+              "gte": 1,
+              "lte": 1000
+            }
+          }
+        },
+        {
+          "range": {
+            "available": {
+              "gt": 0
+            }
+          }
+        }
+      ]
+    }
+  },
+  "from": 0,
+  "size": 10,
+  "_source": ["id", "title", "slug", "price", "available", "category_id"]
+}
+
+### Проверка роутa приложения /search
+GET {{host}}/search?q=plastic&page=1&limit=10&sort_by=added&sort_order=desc
+Accept: text/html
+

@@ -1,0 +1,14 @@
+{# templates/admin/actions/list__action.html.twig #}
+{#{% extends '@SonataAdmin/CRUD/list__action.html.twig' %}#}
+{# Force the configuration check to think it's 'icon' #}
+
+
+{% extends get_admin_template('base_list_field', admin.code) %}
+
+{% block field %}
+    <div class="btn-group inline-block">
+        {% for actions in field_description.option('actions') %}
+            {% include actions.template %}
+        {% endfor %}
+    </div>
+{% endblock %}

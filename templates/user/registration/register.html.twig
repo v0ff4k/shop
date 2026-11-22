@@ -1,0 +1,69 @@
+{# templates/user/registration/register.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}Регистрация - {{ app_name }}{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-plus"></i> Регистрация</h4>
+                </div>
+                <div class="card-body">
+                    <form action="{{ path('user_register') }}" method="POST">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('shop_action') }}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Логин *</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   required minlength="3" maxlength="50"
+                                   pattern="[a-zA-Z0-9_]+"
+                                   placeholder="Только буквы, цифры и подчеркивания">
+                            <small class="text-muted">3-50 символов</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="plain_password" class="form-label">Пароль *</label>
+                            <input type="password" class="form-control" id="plain_password" 
+                                   name="plain_password" required minlength="8" maxlength="72">
+                            <small class="text-muted">Минимум 8 символов, заглавная, строчная буква и цифра</small>
+                        </div>
+
+                        <hr>
+
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">ФИО</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Адрес</label>
+                            <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="additional_info" class="form-label">Дополнительная информация</label>
+                            <textarea class="form-control" id="additional_info" name="additional_info" rows="2"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Зарегистрироваться
+                            </button>
+                            <a href="{{ path('user_login') }}" class="btn btn-outline-secondary">
+                                Уже есть аккаунт? Войти
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

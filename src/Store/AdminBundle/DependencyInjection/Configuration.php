@@ -1,6 +1,8 @@
 <?php
 
-namespace Store\AdminBundle\DependencyInjection;
+declare(strict_types=1);
+
+namespace App\Store\AdminBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -12,13 +14,11 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 class Configuration implements ConfigurationInterface
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('store_admin');
+        $treeBuilder = new TreeBuilder('store_admin');
+        $treeBuilder->getRootNode();
+
         return $treeBuilder;
     }
 }

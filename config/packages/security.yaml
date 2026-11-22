@@ -1,0 +1,61 @@
+# config/packages/security.yaml
+security:
+    password_hashers:
+        App\Domain\User\Entity\User:
+            algorithm: argon2id
+
+    providers:
+        app_user_provider:
+            id: App\Infrastructure\Security\UserProvider
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: /api/login
+                username_path: username
+                password_path: password
+
+        main:
+            pattern: ^/
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: /login
+                check_path: /login_check
+                default_target_path: shop_homepage
+                enable_csrf: true
+                csrf_parameter: _csrf_token
+            logout:
+                path: /logout
+                target: shop_homepage
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800
+                path: /
+
+    access_control:
+#        - { path: ^/dev-tools, allow_if: "parameter('kernel.debug') == true" }
+#        - { path: ^/_profiler, allow_if: "parameter('kernel.debug') == true" }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/products, roles: PUBLIC_ACCESS }
+        - { path: ^/api/product, roles: PUBLIC_ACCESS }
+        - { path: ^/metrics, roles: PUBLIC_ACCESS }
+        - { path: ^/profile, roles: ROLE_CUSTOMER }
+        - { path: ^/order, roles: ROLE_ADMIN }
+        - { path: ^/order, roles: ROLE_CUSTOMER }
+        - { path: ^/orders, roles: PUBLIC_ACCESS, allow_if: "is_granted('ORDER_OWNER', request.attributes.get('id'))" }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+
+    role_hierarchy:
+        ROLE_ADMIN: [ROLE_STAFF]
+        ROLE_STAFF: [ROLE_SELLER]
+        ROLE_SELLER: [ROLE_CUSTOMER]

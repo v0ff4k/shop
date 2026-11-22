@@ -1,0 +1,40 @@
+{# templates/includes/_admin_product_image.html.twig #}
+{#
+    Шаблон для отображения изображения, или нескольких с модалкой для просмотра большого изображения
+
+    object = obj
+    multiply = unset|true
+#}
+
+{% if object.path %}
+    {# TODO move to valueobjects and ENV/constants #}
+    {% set code = object.path|split('/')|last|split('.')|first %}
+    {# "products/be/cf/becfcf51fe1b... ->  "products/thumb/be/cf/becfcf51fe1b #}
+    {% set thumb = object.path|split('/')|slice(0, 1)|merge(['thumb'])|merge(object.path|split('/')|slice(1))|join('/') %}
+
+    <!-- link to modal with "preview" -->
+    <div class="product-path-{{ object.position }}-{{ object.id }} inline-block product_path">
+        <a href="#" data-toggle="modal" data-target="#imageModal{{ code }}"><img
+                    src="{{ asset_upload(thumb) }}" alt="{{ object.alt }}"
+                    {# TODO remove style  #}
+                    style="max-width: 100%; height: auto; display: block; max-height: 50px;" class="small-thumb"
+            ></a>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="imageModal{{ code }}" tabindex="-{{ object.id }}" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content border rounded-4 p-3">
+                <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <img src="{{ asset_upload(object.path) }}" class="img-responsive center-block" alt="Full Size Image">
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <span class="text-muted">Нет изображения</span>
+{% endif %}

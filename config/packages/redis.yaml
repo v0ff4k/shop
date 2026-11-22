@@ -1,0 +1,11 @@
+# config/packages/redis.yaml
+parameters:
+    redis_host: '%env(REDIS_HOST)%'
+    redis_port: '%env(REDIS_PORT)%'
+
+services:
+    Redis:
+        class: Redis
+        public: true
+        calls:
+            - connect: ['%redis_host%', '%redis_port%']

@@ -1,0 +1,55 @@
+{# templates/shop/product/search.html.twig #}
+{% extends 'layout/app.html.twig' %}
+
+{% block title %}Поиск: {{ query }} - {{ app_name }}{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <h1>Результаты поиска</h1>
+    <p class="lead">Запрос: <strong>{{ query }}</strong></p>
+    <p class="text-muted">Найдено товаров: {{ total }}</p>
+
+    {% if products.items|default(products)|length > 0 %}
+        <div class="row mt-4">
+            {% set items = products.items|default(products) %}
+            {% for product in items %}
+                {% include 'includes/_product_card.html.twig' with {product: product} %}
+            {% endfor %}
+        </div>
+
+        {# Пагинация #}
+        {% if products.pages is defined and products.pages > 1 %}
+            <nav aria-label="Навигация по страницам" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if products.page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ path('shop_product_search', {q: query, page: products.page - 1, limit: products.limit}) }}">&laquo;</a>
+                        </li>
+                    {% endif %}
+
+                    {% for p in 1..products.pages %}
+                        <li class="page-item {{ p == products.page ? 'active' }}">
+                            <a class="page-link" href="{{ path('shop_product_search', {q: query, page: p, limit: products.limit}) }}">{{ p }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if products.page < products.pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ path('shop_product_search', {q: query, page: products.page + 1, limit: products.limit}) }}">&raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        {% include 'includes/_empty_state.html.twig' with {
+            message: 'Ничего не найдено',
+            subMessage: 'По запросу "' ~ query ~ '" товаров не найдено. Попробуйте изменить поисковый запрос.',
+            btnText: 'Смотреть весь каталог',
+            btnRoute: 'shop_product_index',
+            icon: 'search',
+            type: 'warning'
+        } %}
+    {% endif %}
+</div>
+{% endblock %}

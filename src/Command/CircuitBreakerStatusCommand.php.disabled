@@ -1,0 +1,162 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Command;
+
+use App\Infrastructure\External\CircuitBreaker\CircuitBreakerMetrics;
+use App\Infrastructure\External\CircuitBreaker\RedisCircuitBreaker;
+use App\Infrastructure\External\CircuitBreaker\State;
+use Redis;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+
+#[AsCommand(
+    name: 'circuit-breaker:status',
+    description: 'Показывает статус circuit breaker для сервиса',
+)]
+class CircuitBreakerStatusCommand extends Command
+{
+    private Redis $redis;
+    private CircuitBreakerMetrics $metrics;
+
+    public function __construct(Redis $redis, CircuitBreakerMetrics $metrics)
+    {
+        parent::__construct();
+        $this->redis = $redis;
+        $this->metrics = $metrics;
+    }
+
+    protected function configure(): void
+    {
+        $this
+            ->addArgument('service', InputArgument::OPTIONAL, 'Имя сервиса')
+            ->addOption('all', null, InputOption::VALUE_NONE, 'Показать все circuit breakers')
+            ->addOption('reset', null, InputOption::VALUE_NONE, 'Сбросить circuit breaker');
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+        $service = $input->getArgument('service');
+        $reset = $input->getOption('reset');
+
+        if ($input->getOption('all')) {
+            return $this->showAll($io);
+        }
+
+        if (!$service) {
+            $io->error('Укажите имя сервиса или используйте --all');
+
+            return Command::FAILURE;
+        }
+
+        if ($reset) {
+            return $this->resetBreaker($io, $service);
+        }
+
+        return $this->showStatus($io, $service);
+    }
+
+    private function showAll(SymfonyStyle $io): int
+    {
+        $pattern = 'circuit_breaker:*:state';
+        $keys = $this->redis->keys($pattern);
+
+        if (empty($keys)) {
+            $io->info('Circuit breakers не найдены');
+
+            return Command::SUCCESS;
+        }
+
+        $rows = [];
+        foreach ($keys as $key) {
+            if (preg_match('/circuit_breaker:(.+):state/', $key, $matches)) {
+                $serviceName = $matches[1];
+                $circuitBreaker = new RedisCircuitBreaker($this->redis, $serviceName);
+                $state = $circuitBreaker->getState();
+                $statistics = $circuitBreaker->getStatistics();
+
+                $stateIcon = match ($state) {
+                    State::CLOSED => '🟢',
+                    State::OPEN => '🔴',
+                    State::HALF_OPEN => '🟡',
+                };
+
+                $rows[] = [
+                    $stateIcon,
+                    $serviceName,
+                    $state->value,
+                    sprintf('%.1f%%', $statistics->getFailureRate()),
+                    $statistics->getTotalCalls(),
+                ];
+            }
+        }
+
+        $io->title('Все Circuit Breakers');
+        $io->table(['Статус', 'Сервис', 'Состояние', 'Failure Rate', 'Всего вызовов'], $rows);
+
+        return Command::SUCCESS;
+    }
+
+    private function resetBreaker(SymfonyStyle $io, string $service): int
+    {
+        $circuitBreaker = new RedisCircuitBreaker($this->redis, $service);
+        $circuitBreaker->reset();
+
+        $io->success(sprintf('Circuit breaker "%s" сброшен', $service));
+
+        return Command::SUCCESS;
+    }
+
+    private function showStatus(SymfonyStyle $io, string $service): int
+    {
+        $circuitBreaker = new RedisCircuitBreaker($this->redis, $service);
+        $state = $circuitBreaker->getState();
+        $statistics = $circuitBreaker->getStatistics();
+
+        $stateColors = [
+            State::CLOSED->value => 'green',
+            State::OPEN->value => 'red',
+            State::HALF_OPEN->value => 'yellow',
+        ];
+
+        $io->title(sprintf('Circuit Breaker: %s', $service));
+
+        $io->section('Состояние');
+        $io->writeln(
+            sprintf(
+                'Состояние: <fg=%s;bg=black>%s</>',
+                $stateColors[$state->value] ?? 'white',
+                $state->value
+            )
+        );
+        $io->writeln(sprintf('Failure Rate: %.2f%%', $statistics->getFailureRate()));
+
+        if ($statistics->nextRetryTime !== null) {
+            $seconds = $statistics->nextRetryTime->getTimestamp() - time();
+            $io->writeln(sprintf('Время до сброса: <fg=yellow>%d сек</>', max(0, $seconds)));
+        }
+
+        $io->section('Статистика');
+        $io->table(
+            ['Метрика', 'Значение'],
+            [
+                ['Успешных вызовов', $statistics->successCount],
+                ['Неудачных вызовов', $statistics->failureCount],
+                ['Отклонено (circuit open)', $statistics->rejectedCount],
+                ['Таймаутов', $statistics->timeoutCount],
+                ['Всего вызовов', $statistics->getTotalCalls()],
+                ['Последний успех', $statistics->lastSuccessTime?->format('Y-m-d H:i:s') ?? 'никогда'],
+                ['Последняя ошибка', $statistics->lastFailureTime?->format('Y-m-d H:i:s') ?? 'никогда'],
+            ]
+        );
+
+        return Command::SUCCESS;
+    }
+}

@@ -1,0 +1,1260 @@
+{# templates/admin/monitor.html.twig #}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг систем</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background: #f5f5f5; }
+        .card { margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-header { font-weight: bold; cursor: pointer; user-select: none; }
+        .card-header:hover { background-color: rgba(0,0,0,0.05); }
+        .card-header .toggle-icon { transition: transform 0.3s; }
+        .card-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+        .status-ok { color: #28a745; }
+        .status-warning { color: #ffc107; }
+        .status-error { color: #dc3545; }
+        .queue-card {
+            border: 1px solid rgba(13, 110, 253, 0.12);
+            border-radius: 1rem;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,249,250,1));
+        }
+        .queue-metric {
+            min-height: 75px;
+        }
+        .queue-health-table td, .queue-health-table th {
+            vertical-align: middle;
+        }
+        .xml-panel {
+            border: 1px solid rgba(25, 135, 84, 0.12);
+            border-radius: 1rem;
+            background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,249,250,1));
+        }
+        .xml-help {
+            font-size: 0.92rem;
+            color: #6c757d;
+        }
+        .xml-status {
+            min-height: 1.5rem;
+        }
+        .admin-section-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            background: rgba(245, 245, 245, 0.96);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            backdrop-filter: blur(6px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h2 class="mb-0"><i class="bi bi-speedometer2"></i> Мониторинг систем</h2>
+                    <a href="{{ path('sonata_admin_dashboard') }}" class="btn btn-secondary btn-sm">← Вернуться в админку</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="admin-section-nav mb-4 d-flex flex-wrap gap-2" aria-label="Разделы мониторинга">
+            <a class="btn btn-sm btn-outline-dark" href="#systemStatus"><i class="bi bi-hdd-stack"></i> Системы</a>
+            <a class="btn btn-sm btn-outline-dark" href="#xmlImportCard"><i class="bi bi-file-earmark-arrow-up"></i> XML импорт</a>
+            <a class="btn btn-sm btn-outline-dark" href="#xmlExportCard"><i class="bi bi-file-earmark-arrow-down"></i> XML экспорт</a>
+            <a class="btn btn-sm btn-outline-dark" href="#asyncJobsCard"><i class="bi bi-list-task"></i> Async Jobs</a>
+            <a class="btn btn-sm btn-outline-dark" href="#prometheusWatchCard"><i class="bi bi-graph-up"></i> Prometheus</a>
+            <a class="btn btn-sm btn-outline-dark" href="#logsContainer"><i class="bi bi-journal-text"></i> Логи</a>
+        </nav>
+
+        {# Кнопка очистки кеша #}
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <button id="clearCacheBtn" class="btn btn-warning btn-lg">
+                    <i class="bi bi-trash"></i> Очистить весь кеш
+                </button>
+                <span id="clearCacheStatus" class="ms-3" style="display: none;"></span>
+            </div>
+
+            {# Email Spool #}
+            <div class="col-md-6 col-lg-6">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#spoolCard" aria-expanded="false">
+                        <i class="bi bi-envelope"></i> Email Spool
+                        {% if status.emailSpool.enabled %}
+                            <span class="badge bg-warning float-end">SPOOL MODE</span>
+                        {% else %}
+                            <span class="badge bg-success float-end">DIRECT MODE</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down float-end toggle-icon me-2"></i>
+                    </div>
+                    <div id="spoolCard" class="card-body collapse">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Режим:</strong>
+                                {% if status.emailSpool.enabled %}
+                                    <span class="badge bg-warning">Spool (сохраняет письма)</span>
+                                {% else %}
+                                    <span class="badge bg-success">Direct (отправляет сразу)</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Писем в очереди:</strong>
+                                <span class="badge bg-info">{{ status.emailSpool.count }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Размер:</strong>
+                                {{ status.emailSpool.totalSizeHuman }}
+                            </div>
+                        </div>
+
+                        {% if status.emailSpool.count > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover small">
+                                    <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Кому</th>
+                                        <th>Тема</th>
+                                        <th>Дата</th>
+                                        <th>Размер</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for email in status.emailSpool.emails %}
+                                        <tr>
+                                            <td><code>{{ email.id|slice(0, 20) }}...</code></td>
+                                            <td>{{ email.to }}</td>
+                                            <td>{{ email.subject }}</td>
+                                            <td>{{ email.date }}</td>
+                                            <td>{{ (email.size / 1024)|round(2) }} KB</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="alert alert-info small">
+                                <i class="bi bi-info-circle"></i>
+                                Для отправки писем выполните:
+                                <code>php bin/console app:email:spool:send</code>
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-envelope-check" style="font-size: 2rem;"></i>
+                                <p class="mt-2">Spool пуст - нет писем для отправки</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="systemStatus">
+
+            {# Database Status #}
+            <div class="col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#dbCard" aria-expanded="false">
+                        <i class="bi bi-database"></i> База данных
+                        <button class="btn btn-sm btn-outline-secondary float-end me-2 refresh-block-btn" data-refresh-block="database" type="button">Обновить</button>
+                        <i class="bi bi-chevron-down float-end toggle-icon"></i>
+                    </div>
+                    <div id="dbCard" class="card-body collapse" data-monitor-block="database">
+                        {% if status.database.status == 'ok' %}
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i> {{ status.database.message }}
+                            </div>
+                            <p><strong>Driver:</strong> <span data-block="database" data-field="driver">{{ status.database.driver }}</span></p>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="p-2 border rounded bg-light">
+                                        <div class="text-muted small">Таблиц</div>
+                                        <div class="fs-5 fw-bold" data-block="database" data-field="tableCount">{{ status.database.tableCount ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 border rounded bg-light">
+                                        <div class="text-muted small">Размер БД</div>
+                                        <div class="fs-5 fw-bold" data-block="database" data-field="databaseSizeHuman">{{ status.database.databaseSizeHuman ?? '—' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if status.database.topTables is defined and status.database.topTables is not empty %}
+                                <table class="table table-sm small mb-0">
+                                    <thead><tr><th>Таблица</th><th class="text-end">Размер</th></tr></thead>
+                                    <tbody>
+                                    {% for table in status.database.topTables %}
+                                        <tr><td><code>{{ table.name }}</code></td><td class="text-end">{{ table.sizeHuman }}</td></tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                            <div class="text-muted small mt-2">Обновлено: <span data-block-updated="database">—</span></div>
+                        {% else %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-x-circle"></i> {{ status.database.message }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# Cache Status #}
+            <div class="col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#cacheCard" aria-expanded="false">
+                        <i class="bi bi-lightning"></i> Кеш
+                        <button class="btn btn-sm btn-outline-secondary float-end me-2 refresh-block-btn" data-refresh-block="cache" type="button">Обновить</button>
+                        <i class="bi bi-chevron-down float-end toggle-icon"></i>
+                    </div>
+                    <div id="cacheCard" class="card-body collapse" data-monitor-block="cache">
+                        {% if status.cache.status == 'ok' %}
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i> {{ status.cache.message }}
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6"><div class="p-2 border rounded bg-light"><div class="text-muted small">Ключей</div><div class="fw-bold" data-block="cache" data-field="keys">{{ status.cache.keys ?? '—' }}</div></div></div>
+                                <div class="col-6"><div class="p-2 border rounded bg-light"><div class="text-muted small">Память</div><div class="fw-bold" data-block="cache" data-field="memory">{{ status.cache.memory ?? '—' }}</div></div></div>
+                                <div class="col-6"><div class="p-2 border rounded bg-light"><div class="text-muted small">Hit rate</div><div class="fw-bold" data-block="cache" data-field="hitRate">{{ status.cache.hitRate is not null ? status.cache.hitRate ~ '%' : '—' }}</div></div></div>
+                                <div class="col-6"><div class="p-2 border rounded bg-light"><div class="text-muted small">Hits / Misses</div><div class="fw-bold"><span data-block="cache" data-field="hits">{{ status.cache.hits ?? '—' }}</span> / <span data-block="cache" data-field="misses">{{ status.cache.misses ?? '—' }}</span></div></div></div>
+                            </div>
+                            <div class="text-muted small mt-2">Обновлено: <span data-block-updated="cache">—</span></div>
+                        {% elseif status.cache.status == 'warning' %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> {{ status.cache.message }}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-x-circle"></i> {{ status.cache.message }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# Redis Status TODO  redis:26379  #}
+            <div class="col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#redisCard" aria-expanded="false">
+                        <i class="bi bi-circle"></i> Redis
+                        <button class="btn btn-sm btn-outline-secondary float-end me-2 refresh-block-btn" data-refresh-block="redis" type="button">Обновить</button>
+                        <i class="bi bi-chevron-down float-end toggle-icon"></i>
+                    </div>
+                    <div id="redisCard" class="card-body collapse" data-monitor-block="redis">
+                        {% if status.redis.status == 'ok' %}
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i> {{ status.redis.message }}
+                            </div>
+                            <p><strong>Version:</strong> <span data-block="redis" data-field="version">{{ status.redis.version }}</span></p>
+                            <p><strong>Memory:</strong> <span data-block="redis" data-field="used_memory">{{ status.redis.used_memory }}</span></p>
+                            <p><strong>Clients:</strong> <span data-block="redis" data-field="connected_clients">{{ status.redis.connected_clients }}</span></p>
+                            <p><strong>Keys:</strong> <span data-block="redis" data-field="keys">{{ status.redis.keys ?? '—' }}</span></p>
+                            <div class="text-muted small mt-2">Обновлено: <span data-block-updated="redis">—</span></div>
+                        {% elseif status.redis.status == 'warning' %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> {{ status.redis.message }}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-x-circle"></i> {{ status.redis.message }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# Disk Space #}
+            <div class="col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#diskCard" aria-expanded="false">
+                        <i class="bi bi-hdd"></i> Диск
+                        <i class="bi bi-chevron-down float-end toggle-icon"></i>
+                    </div>
+                    <div id="diskCard" class="card-body collapse">
+                        {% if status.disk.status == 'ok' %}
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i> {{ status.disk.message }}
+                            </div>
+                        {% elseif status.disk.status == 'warning' %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> {{ status.disk.message }}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger">
+                                <i class="bi bi-x-circle"></i> {{ status.disk.message }}
+                            </div>
+                        {% endif %}
+                        <div class="progress">
+                            <div class="progress-bar {{ status.disk.percentUsed > 90 ? 'bg-danger' : (status.disk.percentUsed > 75 ? 'bg-warning' : 'bg-success') }}"
+                                 role="progressbar"
+                                 style="width: {{ status.disk.percentUsed }}%"
+                                 aria-valuenow="{{ status.disk.percentUsed }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                {{ status.disk.percentUsed }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Resources: CPU/RAM #}
+            <div class="col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#resourcesCard" aria-expanded="false">
+                        <i class="bi bi-cpu"></i> Ресурсы (CPU/RAM)
+                        <button class="btn btn-sm btn-outline-secondary float-end me-2 refresh-block-btn" data-refresh-block="resources" type="button">Обновить</button>
+                        <i class="bi bi-chevron-down float-end toggle-icon"></i>
+                    </div>
+                    <div id="resourcesCard" class="card-body collapse" data-monitor-block="resources">
+                        <div class="row g-2">
+                            <div class="col-4"><div class="p-2 border rounded bg-light"><div class="text-muted small">Load 1m</div><div class="fw-bold" data-block="resources" data-field="load1">{{ status.resources.load1 ?? '—' }}</div></div></div>
+                            <div class="col-4"><div class="p-2 border rounded bg-light"><div class="text-muted small">Load 5m</div><div class="fw-bold" data-block="resources" data-field="load5">{{ status.resources.load5 ?? '—' }}</div></div></div>
+                            <div class="col-4"><div class="p-2 border rounded bg-light"><div class="text-muted small">Load 15m</div><div class="fw-bold" data-block="resources" data-field="load15">{{ status.resources.load15 ?? '—' }}</div></div></div>
+                        </div>
+                        <p class="mt-3 mb-1"><strong>Memory usage:</strong> <span data-block="resources" data-field="memoryUsageHuman">{{ status.resources.memoryUsageHuman }}</span></p>
+                        <p class="mb-1"><strong>Memory peak:</strong> <span data-block="resources" data-field="memoryPeakHuman">{{ status.resources.memoryPeakHuman }}</span></p>
+                        <p class="mb-1"><strong>Memory limit:</strong> <span data-block="resources" data-field="memoryLimitHuman">{{ status.resources.memoryLimitHuman }}</span></p>
+                        {% if status.resources.memoryPercent is not null %}
+                            <div class="progress mb-2">
+                                <div class="progress-bar {{ status.resources.memoryPercent > 85 ? 'bg-danger' : (status.resources.memoryPercent > 70 ? 'bg-warning' : 'bg-success') }}"
+                                     style="width: {{ status.resources.memoryPercent }}%">{{ status.resources.memoryPercent }}%</div>
+                            </div>
+                        {% endif %}
+                        <div class="text-muted small">Проверено: <span data-block="resources" data-field="checkedAt">{{ status.resources.checkedAt }}</span> · <span data-block-updated="resources">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+            {# PHP Info #}
+            <div class="col-md-12 col-lg-8">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#phpCard" aria-expanded="false">
+                        <i class="bi bi-code-slash"></i> PHP Информация
+                        <i class="bi bi-chevron-down float-end toggle-icon"></i>
+                    </div>
+                    <div id="phpCard" class="card-body collapse">
+                        <table class="table table-striped">
+                            <tbody>
+                                <tr>
+                                    <th>PHP Version</th>
+                                    <td>{{ status.php.version }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Memory Limit</th>
+                                    <td>{{ status.php.memory_limit }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Max Execution Time</th>
+                                    <td>{{ status.php.max_execution_time }}s</td>
+                                </tr>
+                                <tr>
+                                    <th>Upload Max Filesize</th>
+                                    <td>{{ status.php.upload_max_filesize }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Post Max Size</th>
+                                    <td>{{ status.php.post_max_size }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {# Product Index Status #}
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#productIndexCard" aria-expanded="false">
+                        <i class="bi bi-search"></i> Индексация товаров (Elasticsearch)
+                        <button class="btn btn-sm btn-outline-secondary float-end me-2 refresh-block-btn" data-refresh-block="productIndex" type="button">Обновить</button>
+                        {% if status.productIndex.status == 'ok' %}
+                            <span class="badge bg-success float-end">Синхронизировано</span>
+                        {% elseif status.productIndex.status == 'warning' %}
+                            <span class="badge bg-warning float-end">Рассинхронизация</span>
+                        {% else %}
+                            <span class="badge bg-danger float-end">Ошибка</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down float-end toggle-icon me-2"></i>
+                    </div>
+                    <div id="productIndexCard" class="card-body collapse" data-monitor-block="productIndex">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>В базе данных:</strong>
+                                <span class="badge bg-primary">{{ status.productIndex.totalInDb }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Проиндексировано:</strong>
+                                <span class="badge bg-info" data-block="productIndex" data-field="indexedCount">{{ status.productIndex.indexedCount }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Статус индекса:</strong>
+                                {% if status.productIndex.indexExists %}
+                                    <span class="badge bg-success">Создан</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Не создан</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if status.productIndex.status != 'ok' %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> {{ status.productIndex.message }}
+                            </div>
+                            {% if status.productIndex.totalInDb > 0 and status.productIndex.indexedCount != status.productIndex.totalInDb %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    Для переиндексации выполните:
+                                    <code>php bin/console app:product:reindex</code>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i> {{ status.productIndex.message }}
+                            </div>
+                        {% endif %}
+
+                        {% if status.productIndex.totalInDb > 0 %}
+                            <div class="progress mb-2">
+                                {% set progressPercent = status.productIndex.totalInDb > 0 ? (status.productIndex.indexedCount / status.productIndex.totalInDb * 100)|round : 0 %}
+                                <div class="progress-bar {{ progressPercent == 100 ? 'bg-success' : 'bg-warning' }}"
+                                     role="progressbar"
+                                     style="width: {{ progressPercent }}%"
+                                     aria-valuenow="{{ progressPercent }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    {{ progressPercent }}%
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="row g-2 mt-2 small">
+                            <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light"><div class="text-muted">Index</div><code data-block="productIndex" data-field="indexName">{{ status.productIndex.indexName ?? '—' }}</code></div></div>
+                            <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light"><div class="text-muted">Cluster health</div><span class="fw-bold" data-block="productIndex" data-field="health">{{ status.productIndex.health ?? '—' }}</span></div></div>
+                            <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light"><div class="text-muted">Store size</div><span class="fw-bold" data-block="productIndex" data-field="storeHuman">{{ status.productIndex.storeHuman ?? '—' }}</span></div></div>
+                            <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light"><div class="text-muted">Segments</div><span class="fw-bold" data-block="productIndex" data-field="segments">{{ status.productIndex.segments ?? '—' }}</span></div></div>
+                            <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light"><div class="text-muted">Docs / deleted</div><span class="fw-bold"><span data-block="productIndex" data-field="docsCount">{{ status.productIndex.docsCount ?? '—' }}</span> / <span data-block="productIndex" data-field="deletedDocs">{{ status.productIndex.deletedDocs ?? '—' }}</span></span></div></div>
+                            <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light"><div class="text-muted">Search queries</div><span class="fw-bold" data-block="productIndex" data-field="searchQueries">{{ status.productIndex.searchQueries ?? '—' }}</span></div></div>
+                            <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light"><div class="text-muted">Index operations</div><span class="fw-bold" data-block="productIndex" data-field="indexingOperations">{{ status.productIndex.indexingOperations ?? '—' }}</span></div></div>
+                        </div>
+                        <div class="text-muted small mt-2">Обновлено: <span data-block-updated="productIndex">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+
+            {# XML import/export  #}
+            <div class="row mb-4">
+                {# XML import  #}
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="card xml-panel">
+                        <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#xmlImportCard" aria-expanded="false">
+                            <i class="bi bi-upload"></i> XML Import
+                            <span class="badge bg-success float-end">async</span>
+                            <i class="bi bi-chevron-down float-end toggle-icon me-2"></i>
+                        </div>
+                        <div id="xmlImportCard" class="card-body collapse">
+                            <p class="xml-help mb-3">
+                                Большие XML-файлы импортируются асинхронно через очередь `xml`.
+                                Статус и retry доступны в блоке Async Jobs ниже.
+                            </p>
+                            <form id="xmlImportForm" class="vstack gap-3" enctype="multipart/form-data">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label for="importUserID" class="form-label">user-id владельца <br />(по умольчанию ВЫ !)</label>
+                                        <input id="importUserID" name="import_user_id" type="number" min="1" max="99999999" value="{{ app.user.id }}" class="form-control">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label for="xmlFile" class="form-label">XML файл <br />(например var/storage/products.xml)</label>
+                                        <input id="xmlFile" name="xml_file" type="file" class="form-control" accept=".xml,text/xml,application/xml" required>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-upload"></i> Запустить импорт
+                                    </button>
+                                    <span class="text-muted small">Файл попадёт в очередь и будет обработан в фоне.</span>
+                                </div>
+                                <div id="xmlImportStatus" class="xml-status small"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {# XML export  #}
+                <div class="col-md-6">
+                    <div class="card xml-panel">
+                        <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#xmlExportCard" aria-expanded="false">
+                            <i class="bi bi-download"></i> XML Export
+                            <span class="badge bg-primary float-end">async</span>
+                            <i class="bi bi-chevron-down float-end toggle-icon me-2"></i>
+                        </div>
+                        <div id="xmlExportCard" class="card-body collapse">
+                            <p class="xml-help mb-3">
+                                Экспорт создаётся асинхронно. Можно указать список `product_ids` через запятую
+                                или оставить пустым, чтобы выгрузить товары по `limit`.
+                            </p>
+                            <form id="xmlExportForm" class="vstack gap-3">
+                                <div>
+                                    <label for="exportProductIds" class="form-label">Product IDs</label>
+                                    <textarea id="exportProductIds" name="product_ids" class="form-control" rows="3" placeholder="1, 2, 3"></textarea>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label for="exportUserID" class="form-label" title="ID пользователя, кому будет экспорт,">userID<sup>*</sup></label>
+                                        <input id="exportUserID" name="export_user_id" type="number" min="1" max="99999999" value="{{ app.user.id }}" class="form-control">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="exportLimit" class="form-label">Limit</label>
+                                        <input id="exportLimit" name="limit" type="number" min="1" max="5000" value="1000" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="exportPath" class="form-label">Файл экспорта (опционально)</label>
+                                        <input id="exportPath" name="output_path" type="text" class="form-control" placeholder="var/storage/products.xml">
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-download"></i> Запустить экспорт
+                                    </button>
+                                    <span class="text-muted small">При повторе(retry) используется сохранённый "payload".</span>
+                                </div>
+                                <div id="xmlExportStatus" class="xml-status small"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Async Jobs Status #}
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#asyncJobsCard" aria-expanded="false">
+                        <i class="bi bi-list-task"></i> Async Jobs (Rabbit/XML)
+                        <button class="btn btn-sm btn-outline-secondary float-end me-2 refresh-block-btn" data-refresh-block="asyncJobs" type="button">Обновить</button>
+                        <span class="badge bg-secondary float-end">{{ status.asyncJobs.summary.total }}</span>
+                        <i class="bi bi-chevron-down float-end toggle-icon me-2"></i>
+                    </div>
+                    <div id="asyncJobsCard" class="card-body collapse" data-monitor-block="asyncJobs">
+                        <div class="row g-3 mb-3">
+                            <div class="col-6 col-md-2"><div class="card queue-card queue-metric"><div class="card-body py-3"><div class="text-muted small">Total</div><div id="asyncMetricTotal" class="fs-4 fw-bold">{{ status.asyncJobs.summary.total }}</div></div></div></div>
+                            <div class="col-6 col-md-2"><div class="card queue-card queue-metric"><div class="card-body py-3"><div class="text-muted small">Pending</div><div id="asyncMetricPending" class="fs-4 fw-bold text-warning">{{ status.asyncJobs.summary.pending }}</div></div></div></div>
+                            <div class="col-6 col-md-2"><div class="card queue-card queue-metric"><div class="card-body py-3"><div class="text-muted small">Running</div><div id="asyncMetricRunning" class="fs-4 fw-bold text-info">{{ status.asyncJobs.summary.running }}</div></div></div></div>
+                            <div class="col-6 col-md-2"><div class="card queue-card queue-metric"><div class="card-body py-3"><div class="text-muted small">Completed</div><div id="asyncMetricCompleted" class="fs-4 fw-bold text-success">{{ status.asyncJobs.summary.completed }}</div></div></div></div>
+                            <div class="col-6 col-md-2"><div class="card queue-card queue-metric"><div class="card-body py-3"><div class="text-muted small">Failed</div><div id="asyncMetricFailed" class="fs-4 fw-bold text-danger">{{ status.asyncJobs.summary.failed }}</div></div></div></div>
+                            <div class="col-6 col-md-2"><div class="card queue-card queue-metric"><div class="card-body py-3"><div class="text-muted small">Backlog</div><div id="asyncMetricBacklog" class="fs-4 fw-bold">{{ status.asyncJobs.summary.pending + status.asyncJobs.summary.running }}</div></div></div></div>
+                            <div class="col-12 text-muted small" id="asyncJobsUpdatedAt">Обновлено: только что</div>
+                            <div class="col-12 small">
+                                <span class="text-muted">By type:</span>
+                                {% for type, count in status.asyncJobs.byType %}
+                                    <span class="badge bg-light text-dark border me-1">{{ type }}: {{ count }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endfor %}
+                                <span class="text-muted ms-3">Oldest pending:</span>
+                                <span class="fw-bold" data-block="asyncJobs" data-field="oldestPendingSeconds">
+                                    {{ status.asyncJobs.oldestPendingSeconds is not null ? status.asyncJobs.oldestPendingSeconds|round(0) ~ 's' : '—' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        {% if status.queueTelemetry.queues is defined and status.queueTelemetry.queues is not empty %}
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm queue-health-table align-middle">
+                                    <thead>
+                                    <tr>
+                                        <th>Queue</th>
+                                        <th>Total</th>
+                                        <th>Pending</th>
+                                        <th>Running</th>
+                                        <th>Failed</th>
+                                        <th>Oldest pending</th>
+                                        <th>Status</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="queueTelemetryBody">
+                                    {% for queueName, queue in status.queueTelemetry.queues %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ queueName }}</strong>
+                                                {% if queue.last_updated_at %}
+                                                    <div class="text-muted small">updated {{ queue.last_updated_at }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ queue.total }}</td>
+                                            <td>{{ queue.pending }}</td>
+                                            <td>{{ queue.running }}</td>
+                                            <td>{{ queue.failed }}</td>
+                                            <td>
+                                                {% if queue.oldest_pending_seconds is not null %}
+                                                    {{ queue.oldest_pending_seconds|round(0) }}s
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if queue.status == 'ok' %}
+                                                    <span class="badge bg-success">healthy</span>
+                                                {% elseif queue.status == 'warning' %}
+                                                    <span class="badge bg-warning text-dark">watch</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">critical</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+
+                        {% if status.asyncJobs.jobs is empty %}
+                            <div class="text-muted">Задачи не найдены.</div>
+                        {% else %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th>Job ID</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Updated</th>
+                                        <th>Error</th>
+                                        <th>Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="asyncJobsBody">
+                                    {% for job in status.asyncJobs.jobs %}
+                                        <tr>
+                                            <td><code>{{ job.job_id|slice(0, 16) }}...</code></td>
+                                            <td>{{ job.type }}</td>
+                                            <td>
+                                                {% if job.status == 'completed' %}
+                                                    <span class="badge bg-success">completed</span>
+                                                {% elseif job.status == 'failed' %}
+                                                    <span class="badge bg-danger">failed</span>
+                                                {% elseif job.status == 'running' %}
+                                                    <span class="badge bg-info">running</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">{{ job.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ job.updated_at ?: '—' }}</td>
+                                            <td class="text-danger">{{ job.error ?: '—' }}</td>
+                                            <td>
+                                                {% if job.status == 'failed' and job.type == 'xml_export' %}
+                                                    <button class="btn btn-sm btn-outline-primary retry-job-btn" data-job-id="{{ job.job_id }}">
+                                                        Retry
+                                                    </button>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# Prometheus monitoring #}
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#prometheusWatchCard" aria-expanded="false">
+                        <i class="bi bi-list-task"></i> Prometheus monitoring
+                        <i class="bi bi-chevron-down float-end toggle-icon me-2"></i>
+                    </div>
+                    <div id="prometheusWatchCard" class="card-body collapse" data-monitor-block="prometheus">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <div class="text-muted small">Async jobs created</div>
+                                    <div class="fs-5 fw-bold">tracked in Prometheus</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <div class="text-muted small">Queue lag</div>
+                                    <div class="fs-5 fw-bold">oldest pending age</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <div class="text-muted small">Export retries</div>
+                                    <div class="fs-5 fw-bold">xml_export only</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 border rounded bg-light">
+                                    <div class="text-muted small">Backend</div>
+                                    <div class="fs-5 fw-bold">Redis + Messenger</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-4">
+                                <div class="alert alert-{{ status.prometheus.status == 'ok' ? 'success' : (status.prometheus.status == 'warning' ? 'warning' : 'danger') }} py-2 mb-0 h-100">
+                                    <strong>Prometheus:</strong> {{ status.prometheus.message }}
+                                    {% if status.prometheus.url %}
+                                        <a class="alert-link d-block mt-1" href="{{ status.prometheus.url }}" target="_blank" rel="noopener">открыть Prometheus</a>
+                                    {% endif %}
+                                    <span class="text-muted small">проверено {{ status.prometheus.checkedAt }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="alert alert-{{ status.grafana.status == 'ok' ? 'success' : (status.grafana.status == 'warning' ? 'warning' : 'danger') }} py-2 mb-0 h-100">
+                                    <strong>Grafana:</strong> {{ status.grafana.message }}
+                                    {% if status.grafana.url %}
+                                        <a class="alert-link d-block mt-1" href="{{ status.grafana.url }}" target="_blank" rel="noopener">открыть Grafana</a>
+                                    {% endif %}
+                                    <span class="text-muted small">проверено {{ status.grafana.checkedAt }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="alert alert-{{ status.jaeger.status == 'ok' ? 'success' : (status.jaeger.status == 'warning' ? 'warning' : 'danger') }} py-2 mb-0 h-100">
+                                    <strong>Jaeger:</strong> {{ status.jaeger.message }}
+                                    {% if status.jaeger.url %}
+                                        <a class="alert-link d-block mt-1" href="{{ status.jaeger.url }}" target="_blank" rel="noopener">открыть Jaeger</a>
+                                    {% endif %}
+                                    <span class="text-muted small">проверено {{ status.jaeger.checkedAt }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-outline-primary btn-sm" href="{{ status.prometheus.url }}/graph?g0.expr=async_jobs_created_total&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h" target="_blank" rel="noopener">
+                                async_jobs_created_total
+                            </a>
+                            <a class="btn btn-outline-primary btn-sm" href="{{ status.prometheus.url }}/graph?g0.expr=async_job_state_transitions_total&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h" target="_blank" rel="noopener">
+                                async_job_state_transitions_total
+                            </a>
+                            <a class="btn btn-outline-primary btn-sm" href="{{ status.prometheus.url }}/graph?g0.expr=async_job_duration_seconds&g0.tab=0&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h" target="_blank" rel="noopener">
+                                async_job_duration_seconds
+                            </a>
+                            <a class="btn btn-outline-secondary btn-sm" href="{{ status.prometheus.url }}/targets?search=" target="_blank" rel="noopener">
+                                all targets
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Jaeger  tracing http://jaeger:26686/search #}
+            {# grafana  tracing http://grafana:23000  admin:admin #}
+            {# rabbitmq  tracing http://grafana:23000  guest:guest #}
+
+
+        </div>
+
+        {# Логи #}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h3><i class="bi bi-journal-text"></i> Последние логи (по 5 записей, остальное — по запросу)</h3>
+                    <small class="text-muted" id="logsUpdatedAt">Обновлено: только что</small>
+                </div>
+
+                <div id="logsContainer">
+                {% for logType, logData in status.logs%}
+                    {%  set logLen = logData|length %}
+
+
+                    <div class="card mb-3">
+                        <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#log-{{ logType }}" aria-expanded="false">
+                            <i class="bi bi-file-earmark-text"></i> {{ logType|upper }} лог
+                            {% if logData is iterable and logLen == 1 and logData.info is defined %}
+                                <small class="p-3 text-muted">({{ logData.info }})</small>
+                            {% endif %}
+                            <small class="p-3 text-muted">{{ logData is empty ? '(пусто)' : '(' ~ (logLen) ~ ' ' ~ ((logLen % 10 == 1 and logLen % 100 != 11) ? 'строка' : ((logLen % 10 in 2..4 and not (logLen % 100 in 12..14)) ? 'строки' : 'строк')) ~ ')' }}</small>
+
+
+                            <i class="bi bi-chevron-down float-end toggle-icon"></i>
+                        </div>
+                        <div id="log-{{ logType }}" class="card-body p-0 collapse" data-log-type="{{ logType }}">
+                            {% if logData is iterable and logLen == 1 and logData.info is defined %}
+                                <div class="p-3 text-muted">{{ logData.info }}</div>
+                            {% elseif logData is empty %}
+                                <div class="p-3 text-muted">Нет записей</div>
+                            {% else %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover mb-0 small">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 150px;">Время</th>
+                                                <th style="width: 80px;">Уровень</th>
+                                                <th style="width: 100px;">Канал</th>
+                                                <th>Сообщение</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for line in logData %}
+                                                <tr>
+                                                    <td class="text-muted">{{ line.datetime|default('—') }}</td>
+                                                    <td>
+                                                        {% set levelClass = '' %}
+                                                        {% if line.level == 'ERROR' or line.level == 'CRITICAL' %}
+                                                            {% set levelClass = 'text-danger fw-bold' %}
+                                                        {% elseif line.level == 'WARNING' %}
+                                                            {% set levelClass = 'text-warning' %}
+                                                        {% elseif line.level == 'INFO' %}
+                                                            {% set levelClass = 'text-info' %}
+                                                        {% endif %}
+                                                        <span class="{{ levelClass }}">{{ line.level }}</span>
+                                                    </td>
+                                                    <td><code>{{ line.channel }}</code></td>
+                                                    <td class="text-break">{{ line.message }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Bootstrap 5 JS (необходим для collapse) #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.getElementById('clearCacheBtn').addEventListener('click', function() {
+            const btn = this;
+            const status = document.getElementById('clearCacheStatus');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Очистка...';
+            status.style.display = 'inline';
+            status.innerHTML = '<span class="text-info">Очистка кеша...</span>';
+
+            fetch('/admin/monitor/clear-cache', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash"></i> Очистить весь кеш';
+                status.innerHTML = '<span class="text-success"><i class="bi bi-check"></i> Кеш очищен!</span>';
+
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-trash"></i> Очистить весь кеш';
+                status.innerHTML = '<span class="text-danger"><i class="bi bi-x"></i> Ошибка очистки кеша</span>';
+            });
+        });
+
+        document.addEventListener('click', function(event) {
+            const button = event.target.closest('.retry-job-btn');
+            if (!button) {
+                return;
+            }
+
+            const jobId = button.getAttribute('data-job-id');
+            button.disabled = true;
+            button.innerText = 'Retrying...';
+
+            fetch(`/admin/monitor/async-jobs/${jobId}/retry`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then((response) => response.json())
+            .then(() => {
+                refreshMonitorLiveData();
+            })
+            .catch(() => {
+                button.disabled = false;
+                button.innerText = 'Retry';
+            });
+        });
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = value ?? '';
+            return div.innerHTML;
+        }
+
+        const blockUrlTemplate = '{{ path('admin_monitor_block', {block: '__BLOCK__'}) }}';
+        const logsUrl = '{{ path('admin_monitor_logs') }}';
+
+        function updateBlockFields(block, data) {
+            Object.entries(data || {}).forEach(([field, value]) => {
+                if (value === null || value === undefined) {
+                    return;
+                }
+                if (!['string', 'number', 'boolean'].includes(typeof value)) {
+                    return;
+                }
+
+                const target = document.querySelector(`[data-block="${block}"][data-field="${field}"]`);
+                if (!target) {
+                    return;
+                }
+
+                let rendered = String(value);
+                if (field === 'memoryPercent' || field === 'hitRate') {
+                    rendered += '%';
+                } else if (field === 'oldestPendingSeconds') {
+                    rendered = `${Math.round(Number(value))}s`;
+                }
+                target.textContent = rendered;
+            });
+
+            const summary = data.summary || null;
+            if (summary) {
+                const mapping = {
+                    asyncMetricTotal: summary.total,
+                    asyncMetricPending: summary.pending,
+                    asyncMetricRunning: summary.running,
+                    asyncMetricCompleted: summary.completed,
+                    asyncMetricFailed: summary.failed,
+                    asyncMetricBacklog: (summary.pending || 0) + (summary.running || 0),
+                };
+                Object.entries(mapping).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = value ?? 0;
+                    }
+                });
+            }
+
+            if (data.health) {
+                renderQueueRows(data.health);
+            }
+            if (data.jobs) {
+                renderJobRows(data.jobs);
+            }
+        }
+
+        async function refreshBlock(block) {
+            const updated = document.querySelector(`[data-block-updated="${block}"]`);
+            if (updated) {
+                updated.textContent = 'обновление…';
+            }
+
+            try {
+                const url = blockUrlTemplate.replace('__BLOCK__', encodeURIComponent(block));
+                const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const payload = await response.json();
+                updateBlockFields(block, payload.data || {});
+
+                if (updated) {
+                    updated.textContent = new Date().toLocaleTimeString();
+                }
+            } catch (error) {
+                if (updated) {
+                    updated.textContent = 'ошибка обновления';
+                }
+            }
+        }
+
+        async function loadLogChunk(type, container) {
+            try {
+                const response = await fetch(`${logsUrl}?type=${encodeURIComponent(type)}&limit=50`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                const lines = Array.isArray(data.lines) ? data.lines : [];
+
+                if (lines.length === 0) {
+                    container.innerHTML = `<div class="p-3 text-muted">${escapeHtml(data.info || 'Нет записей')}</div>`;
+                    return;
+                }
+
+                const rows = lines.map((line) => {
+                    const level = String(line.level || 'INFO');
+                    const levelClass = level === 'ERROR' || level === 'CRITICAL'
+                        ? 'text-danger fw-bold'
+                        : (level === 'WARNING' ? 'text-warning' : (level === 'INFO' ? 'text-info' : ''));
+                    return `<tr>
+                        <td class="text-muted">${escapeHtml(line.datetime || '—')}</td>
+                        <td><span class="${levelClass}">${escapeHtml(level)}</span></td>
+                        <td><code>${escapeHtml(line.channel || 'app')}</code></td>
+                        <td class="text-break">${escapeHtml(line.message || '')}</td>
+                    </tr>`;
+                }).join('');
+
+                container.innerHTML = `<div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0 small">
+                        <thead><tr><th style="width: 150px;">Время</th><th style="width: 80px;">Уровень</th><th style="width: 100px;">Канал</th><th>Сообщение</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div class="text-muted small p-2">Показаны последние ${lines.length} строк (обновлено ${new Date().toLocaleTimeString()})</div>`;
+            } catch (error) {
+                // Оставляем уже отрисованные логи при ошибке.
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            const refreshButton = event.target.closest('.refresh-block-btn');
+            if (!refreshButton) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            refreshBlock(refreshButton.getAttribute('data-refresh-block'));
+        });
+
+        document.addEventListener('shown.bs.collapse', function(event) {
+            const block = event.target.getAttribute('data-monitor-block');
+            if (block) {
+                refreshBlock(block);
+                if (block === 'prometheus') {
+                    refreshBlock('grafana');
+                    refreshBlock('jaeger');
+                }
+            }
+
+            const logType = event.target.getAttribute('data-log-type');
+            if (logType) {
+                loadLogChunk(logType, event.target);
+            }
+        });
+
+        function renderQueueRows(queues) {
+            const body = document.getElementById('queueTelemetryBody');
+            if (!body) {
+                return;
+            }
+
+            const entries = Object.entries(queues || {});
+            if (entries.length === 0) {
+                body.innerHTML = '<tr><td colspan="7" class="text-muted">Очереди не найдены.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = entries.map(([name, queue]) => {
+                const statusBadge = queue.status === 'ok'
+                    ? '<span class="badge bg-success">healthy</span>'
+                    : (queue.status === 'warning'
+                        ? '<span class="badge bg-warning text-dark">watch</span>'
+                        : '<span class="badge bg-danger">critical</span>');
+                const oldest = queue.oldest_pending_seconds !== null
+                    ? `${Math.round(queue.oldest_pending_seconds)}s`
+                    : '—';
+                const updated = queue.last_updated_at
+                    ? `<div class="text-muted small">updated ${escapeHtml(queue.last_updated_at)}</div>`
+                    : '';
+
+                return `<tr>
+                    <td><strong>${escapeHtml(name)}</strong>${updated}</td>
+                    <td>${escapeHtml(queue.total)}</td>
+                    <td>${escapeHtml(queue.pending)}</td>
+                    <td>${escapeHtml(queue.running)}</td>
+                    <td>${escapeHtml(queue.failed)}</td>
+                    <td>${oldest}</td>
+                    <td>${statusBadge}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderJobRows(jobs) {
+            const body = document.getElementById('asyncJobsBody');
+            if (!body) {
+                return;
+            }
+
+            if (!jobs || jobs.length === 0) {
+                body.innerHTML = '<tr><td colspan="6" class="text-muted">Задачи не найдены.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = jobs.map((job) => {
+                const status = job.status || 'pending';
+                const badge = status === 'completed'
+                    ? '<span class="badge bg-success">completed</span>'
+                    : (status === 'failed'
+                        ? '<span class="badge bg-danger">failed</span>'
+                        : (status === 'running'
+                            ? '<span class="badge bg-info">running</span>'
+                            : `<span class="badge bg-warning text-dark">${escapeHtml(status)}</span>`));
+                const retry = status === 'failed' && job.type === 'xml_export'
+                    ? `<button class="btn btn-sm btn-outline-primary retry-job-btn" data-job-id="${escapeHtml(job.job_id)}">Retry</button>`
+                    : '<span class="text-muted">—</span>';
+                const jobId = String(job.job_id || '').slice(0, 16);
+
+                return `<tr>
+                    <td><code>${escapeHtml(jobId)}...</code></td>
+                    <td>${escapeHtml(job.type)}</td>
+                    <td>${badge}</td>
+                    <td>${escapeHtml(job.updated_at || '—')}</td>
+                    <td class="text-danger">${escapeHtml(job.error || '—')}</td>
+                    <td>${retry}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logsContainer');
+            if (!container) {
+                return;
+            }
+
+            const entries = Object.entries(logs || {});
+            if (entries.length === 0) {
+                container.innerHTML = '<div class="text-muted">Логи не найдены.</div>';
+                return;
+            }
+
+            container.innerHTML = entries.map(([type, lines]) => {
+                if (!Array.isArray(lines)) {
+                    const info = escapeHtml(lines && lines.info ? lines.info : 'Нет данных');
+                    return `<div class="card mb-3"><div class="card-header"><i class="bi bi-file-earmark-text"></i> ${escapeHtml(type.toUpperCase())} лог</div><div class="card-body text-muted">${info}</div></div>`;
+                }
+
+                const rows = lines.map((line) => {
+                    const level = String(line.level || 'INFO');
+                    const levelClass = level === 'ERROR' || level === 'CRITICAL'
+                        ? 'text-danger fw-bold'
+                        : (level === 'WARNING' ? 'text-warning' : (level === 'INFO' ? 'text-info' : ''));
+                    return `<tr>
+                        <td class="text-muted">${escapeHtml(line.datetime || '—')}</td>
+                        <td><span class="${levelClass}">${escapeHtml(level)}</span></td>
+                        <td><code>${escapeHtml(line.channel || 'app')}</code></td>
+                        <td class="text-break">${escapeHtml(line.message || '')}</td>
+                    </tr>`;
+                }).join('');
+
+                return `<div class="card mb-3">
+                    <div class="card-header"><i class="bi bi-file-earmark-text"></i> ${escapeHtml(type.toUpperCase())} лог <small class="text-muted">(${lines.length})</small></div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0 small">
+                                <thead><tr><th style="width: 150px;">Время</th><th style="width: 80px;">Уровень</th><th style="width: 100px;">Канал</th><th>Сообщение</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function refreshMonitorLiveData() {
+            if (document.hidden) {
+                return;
+            }
+
+            try {
+                const response = await fetch('{{ path('admin_monitor_live') }}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                const summary = data.asyncJobs.summary || {};
+
+                document.getElementById('asyncMetricTotal').textContent = summary.total ?? 0;
+                document.getElementById('asyncMetricPending').textContent = summary.pending ?? 0;
+                document.getElementById('asyncMetricRunning').textContent = summary.running ?? 0;
+                document.getElementById('asyncMetricCompleted').textContent = summary.completed ?? 0;
+                document.getElementById('asyncMetricFailed').textContent = summary.failed ?? 0;
+                document.getElementById('asyncMetricBacklog').textContent = (summary.pending ?? 0) + (summary.running ?? 0);
+
+                renderQueueRows(data.asyncJobs.health || {});
+                renderJobRows(data.asyncJobs.jobs || []);
+
+                const updatedAt = data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString() : 'только что';
+                document.getElementById('asyncJobsUpdatedAt').textContent = `Обновлено: ${updatedAt}`;
+                document.getElementById('logsUpdatedAt').textContent = `Обновлено: ${updatedAt}`;
+            } catch (error) {
+                // Страница остаётся рабочей при временной недоступности endpoint'а.
+            }
+        }
+
+        setInterval(refreshMonitorLiveData, 15000);
+
+        const xmlImportForm = document.getElementById('xmlImportForm');
+        const xmlImportStatus = document.getElementById('xmlImportStatus');
+        const xmlExportForm = document.getElementById('xmlExportForm');
+        const xmlExportStatus = document.getElementById('xmlExportStatus');
+
+        function renderXmlStatus(target, type, message, jobId = null) {
+            const badge = type === 'success'
+                ? 'success'
+                : (type === 'warning' ? 'warning text-dark' : (type === 'danger' ? 'danger' : 'info'));
+
+            target.innerHTML = `
+                <div class="alert alert-${badge} py-2 mb-0">
+                    ${message}${jobId ? ` <code>${jobId}</code>` : ''}
+                </div>
+            `;
+        }
+
+        async function submitXmlForm(form, endpoint, target) {
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Отправка...';
+            renderXmlStatus(target, 'info', 'Запрос отправлен, ожидаем ответ...');
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    renderXmlStatus(target, 'danger', data.error || 'Ошибка выполнения');
+                    return;
+                }
+
+                renderXmlStatus(target, 'success', data.message || 'Задача поставлена в очередь', data.job_id || null);
+                window.location.reload();
+            } catch (error) {
+                renderXmlStatus(target, 'danger', 'Ошибка отправки запроса');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+
+        xmlImportForm?.addEventListener('submit', function(event) {
+            event.preventDefault();
+            submitXmlForm(xmlImportForm, '{{ path('admin_xml_import') }}', xmlImportStatus);
+        });
+
+        xmlExportForm?.addEventListener('submit', function(event) {
+            event.preventDefault();
+            submitXmlForm(xmlExportForm, '{{ path('admin_xml_export') }}', xmlExportStatus);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{# templates/includes/_pagination.html.twig #}
+{#
+    Шаблон пагинации
+    Параметры:
+        - currentPage: текущая страница (int)
+        - totalPages: всего страниц (int)
+        - route: маршрут для ссылок (string)
+        - routeParams: дополнительные параметры маршрута (array, по умолчанию [])
+        - pageParam: имя параметра страницы (string, по умолчанию 'page')
+#}
+{% set routeParams = routeParams|default({}) %}
+{% set pageParam = pageParam|default('page') %}
+
+{% if totalPages > 1 %}
+    <nav aria-label="Навигация по страницам" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% for page in 1..totalPages %}
+                <li class="page-item {{ page == currentPage ? 'active' : '' }}">
+                    <a class="page-link" href="{{ path(route, routeParams|merge({(pageParam): page})) }}">
+                        {{ page }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
+{% endif %}

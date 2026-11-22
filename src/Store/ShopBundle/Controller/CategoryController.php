@@ -1,29 +1,27 @@
 <?php
 
-namespace Store\ShopBundle\Controller;
+declare(strict_types=1);
 
-use Store\ShopBundle\Entity\Product;
-use Store\ShopBundle\Entity\Category;
+namespace App\Store\ShopBundle\Controller;
+
+use App\Store\ShopBundle\Entity\Category;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 
 /**
- * Description of StoreController
- * 
+ * Description of StoreController.
+ *
  * @Route("category")
  */
 class CategoryController extends Controller
 {
-
     /**
-     * Show category with products by specific id or title
-     * 
+     * Show category with products by specific id or title.
+     *
      * @Route(
-     *      path = "/{slug}/{page}/{orderByColumn}/{orderByDirection}", 
+     *      path = "/{slug}/{page}/{orderByColumn}/{orderByDirection}",
      *      name="category_show",
      *      requirements = {
      *          "page" = "\d*",
@@ -36,7 +34,9 @@ class CategoryController extends Controller
      *          "orderByDirection" = "DESC",
      *      },
      * )
-     * @Template("StoreShopBundle:Category:show.html.twig")
+     *
+     * @Template("shop/legacy/Category/show.html.twig")
+     *
      * @Method({"GET"})
      */
     public function showAction(Category $category, $page, $orderByColumn, $orderByDirection)
@@ -46,19 +46,16 @@ class CategoryController extends Controller
         // set offset=0, if page =< 1, else default $offset
         $offset = ($page <= 1) ? 0 : (($page - 1) * $limit);
 
-        
         $em = $this->getDoctrine()->getManager();
         $productRepo = $em->getRepository('StoreShopBundle:Product');
         $categoryRepo = $em->getRepository('StoreShopBundle:Category');
-        
+
         $categoryId = $category->getId();
         $products = $productRepo->searchProducts($categoryId, $orderByColumn, $orderByDirection, $limit, $offset);
         $popularProducts = $productRepo->searchProducts($categoryId, 'viewed', 'DESC', $limit, $offset);
         $lastProducts = $productRepo->searchProducts($categoryId, 'added', 'DESC', $limit, $offset);
 
         $productsCount = $productRepo->countAllProducts($categoryId);
-
-
 
         $maxPages = ceil($productsCount / $limit);
 
@@ -71,7 +68,7 @@ class CategoryController extends Controller
             'column' => $orderByColumn,
             'direction' => $orderByDirection,
             'maxPages' => $maxPages,
-            'base_dir' => realpath($this->getParameter('kernel.root_dir') . '/..')
+            'base_dir' => realpath($this->getParameter('kernel.root_dir').'/..'),
         ];
     }
 }

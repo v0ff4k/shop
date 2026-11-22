@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\UI\EventListener;
+
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+
+/**
+ * Слушатель для добавления HTTP cache заголовков
+ */
+final class HttpCacheListener
+{
+    public function __construct(
+        private readonly bool $enabled = true
+    )
+    {
+    }
+
+    public function onKernelResponse(ResponseEvent $event): void
+    {
+        if (!$this->enabled) {
+            return;
+        }
+
+        $request = $event->getRequest();
+        $response = $event->getResponse();
+
+        // Не кэшируем API запросы
+        if (str_starts_with($request->getPathInfo(), '/api/')) {
+            return;
+        }
+
+        // Не кэшируем админку
+        if (str_starts_with($request->getPathInfo(), '/admin/')) {
+            return;
+        }
+
+        // Кэшируем только GET запросы
+        if (!$request->isMethodSafe()) {
+            return;
+        }
+
+        // Добавляем заголовки для публичного кэширования
+        if ($response->isSuccessful()) {
+            $response->setPublic();
+            $response->setMaxAge(3600); // 1 час
+            $response->setSharedMaxAge(3600); // 1 час для reverse proxy
+
+            // Добавляем заголовок для кэширования статических ресурсов
+            if (preg_match('/\.(css|js|jpg|jpeg|png|gif|svg|ico|webp|woff|woff2|ttf|eot)$/', $request->getPathInfo())) {
+                $response->setMaxAge(86400 * 30); // 30 дней
+                $response->setSharedMaxAge(86400 * 30);
+            }
+        }
+    }
+}

@@ -1,0 +1,306 @@
+version: '3.3'
+# The attribute `version` is obsolete, hide for "docker-compose" and keep for "docker compose"
+
+# Docker Compose для SHOP приложения
+# Порт: 8042 (только nginx)
+# Сервисы: nginx, php, postgres, postgres_exporter, redis, rabbitmq, prometheus, grafana, elasticsearch
+#
+# БЕЗОПАСНОСТЬ: Открыты только необходимые порты (nginx)
+# Остальные сервисы доступны только внутри Docker сети
+# Для доступа к БД/Redis/RabbitMQ используйте:
+#   - PHP скрипты из контейнера php
+#   - docker exec для отладки
+#   - туннелирование через SSH
+
+services:
+    # Nginx - веб сервер
+    nginx:
+        image: nginx:1.25-alpine
+        container_name: shop_nginx
+        ports:
+            - "8042:80"  # внешний порт - должен быть уникален !
+        volumes:
+            - ./:/var/www/shop:rw
+            - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+        depends_on:
+            - php
+        networks:
+            - shop_network
+        restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # PHP-FPM
+    php:
+        build:
+            context: ./docker/php
+            dockerfile: Dockerfile
+        container_name: shop_php
+        volumes:
+            - ./:/var/www/shop:rw
+            - ./var:/var/www/shop/var:rw
+            - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+            - ./public/uploads:/var/www/shop/public/uploads:rw
+            - ./docker/php/supervisor/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:ro
+        environment:
+            - APP_ENV=dev
+            - APP_DEBUG=1
+            - PHP_FPM_PM_CONTROL=dynamic
+            - PHP_FPM_PM_START_SERVERS=2
+            - PHP_FPM_PM_MIN_SPARE_SERVERS=1
+            - PHP_FPM_PM_MAX_SPARE_SERVERS=10
+        env_file:
+            - .env
+        depends_on:
+            - postgres
+            - redis
+            - rabbitmq
+        networks:
+            - shop_network
+        restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # PostgreSQL - база данных
+    postgres:
+        image: postgres:15-alpine
+        container_name: shop_postgres
+        environment:
+            POSTGRES_DB: shop
+            POSTGRES_USER: shop_user
+            POSTGRES_PASSWORD: shop_password
+        ports:
+             - "25432:5432"  # внешний порт - должен быть уникален !
+        volumes:
+            - postgres_data:/var/lib/postgresql/data:rw
+            - ./databases:/docker-entrypoint-initdb.d:ro
+        networks:
+            - shop_network
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U shop_user -d shop"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # PostgreSQL exporter - метрики БД для Prometheus
+    postgres_exporter:
+        image: quay.io/prometheuscommunity/postgres-exporter:v0.19.1
+        container_name: shop_postgres_exporter
+        environment:
+            DATA_SOURCE_URI: postgres:5432/shop?sslmode=disable
+            DATA_SOURCE_USER: shop_user
+            DATA_SOURCE_PASS: shop_password
+        depends_on:
+            - postgres
+        networks:
+            - shop_network
+        restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # Redis - кэш и сессии
+    redis:
+        image: redis:7-alpine
+        container_name: shop_redis
+        ports:
+             - "26379:6379"  # внешний порт - должен быть уникален !
+        volumes:
+            - redis_data:/data:rw
+        command: redis-server --appendonly yes
+        networks:
+            - shop_network
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # RabbitMQ - очередь сообщений
+    rabbitmq:
+        image: rabbitmq:3-management-alpine
+        container_name: shop_rabbitmq
+        environment:
+            RABBITMQ_DEFAULT_USER: guest
+            RABBITMQ_DEFAULT_PASS: guest
+            RABBITMQ_PLUGINS: rabbitmq_prometheus
+        ports:
+             - "25672:5672"   # AMQP   # внешний порт - должен быть уникален !
+             - "12672:15672" # Management UI  # внешний порт - должен быть уникален !
+        volumes:
+            - rabbitmq_data:/var/lib/rabbitmq:rw
+        networks:
+            - shop_network
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # Elasticsearch - поиск
+    elasticsearch:
+        image: elasticsearch:8.11.0
+        container_name: shop_elasticsearch
+        environment:
+            - discovery.type=single-node
+            - xpack.security.enabled=false
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ports:
+             - "29200:9200"  # внешний порт - должен быть уникален !
+             - "29300:9300"  # внешний порт - должен быть уникален !
+        volumes:
+            - elasticsearch_data:/usr/share/elasticsearch/data:rw
+        networks:
+            - shop_network
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # Elasticsearch exporter - метрики эластики для Prometheus
+    elasticsearch-exporter:
+        image: quay.io/prometheuscommunity/elasticsearch-exporter:latest
+        container_name: shop_elasticsearch-exporter
+        command:
+            - '--es.uri=http://elasticsearch:9200' # Link to the ES service name
+# not need to show publically
+#        ports:
+#            - "9114:9114"
+        depends_on:
+            - elasticsearch
+        networks:
+            - shop_network
+        restart: unless-stopped
+
+    # Prometheus - мониторинг
+    prometheus:
+        image: prom/prometheus:v2.48.0
+        container_name: shop_prometheus
+        ports:
+             - "29090:9090"  # внешний порт - должен быть уникален !
+        volumes:
+            - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            - prometheus_data:/prometheus:rw
+        command:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--web.console.libraries=/etc/prometheus/console_libraries'
+            - '--web.console.templates=/etc/prometheus/consoles'
+            - '--storage.tsdb.retention.time=200h'
+            - '--web.enable-lifecycle'
+        networks:
+            - shop_network
+        restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # Grafana - визуализация метрик
+    # Порт открыт ТОЛЬКО для разработки! В production закрыть.
+    grafana:
+        image: grafana/grafana:10.2.0
+        container_name: shop_grafana
+        ports:
+            - "23000:3000"  # внешний порт - должен быть уникален !
+        environment:
+            - GF_SECURITY_ADMIN_USER=admin # TODO: СМЕНИТЬ в production!
+            - GF_SECURITY_ADMIN_PASSWORD=admin # TODO: СМЕНИТЬ в production!
+            - GF_USERS_ALLOW_SIGN_UP=false
+        volumes:
+            - grafana_data:/var/lib/grafana:rw
+            - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+            - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+        depends_on:
+            - prometheus
+        networks:
+            - shop_network
+        restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    # Jaeger - distributed tracing (OpenTelemetry)
+    jaeger:
+        image: jaegertracing/all-in-one:1.53
+        container_name: shop_jaeger
+        ports:
+             - "2775:5775/udp"
+             - "2831:6831/udp"
+             - "2832:6832/udp"
+             - "2778:5778"
+             - "26686:16686"  # UI
+             - "24268:14268"
+             - "24250:14250"
+             - "29411:9411"  # внешний порт - должен быть уникален !
+        environment:
+            - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+        networks:
+            - shop_network
+        restart: unless-stopped
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "3"
+#entrypoint:
+#    sh:
+
+networks:
+    shop_network:
+        driver: bridge
+
+volumes:
+    postgres_data:
+        driver: local
+    redis_data:
+        driver: local
+    rabbitmq_data:
+        driver: local
+    elasticsearch_data:
+        driver: local
+    elasticsearch_monitor:
+        driver: local
+    prometheus_data:
+        driver: local
+    grafana_data:
+        driver: local
+    database_data:
+        driver: local

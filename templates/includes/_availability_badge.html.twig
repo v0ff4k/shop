@@ -1,0 +1,25 @@
+{# templates/includes/_availability_badge.html.twig #}
+{#
+    Шаблон для отображения статуса наличия товара
+    Параметры:
+        - available: количество доступных товаров (int)
+        - showCount: показывать ли количество (bool, по умолчанию false)
+        - class: дополнительные CSS классы (опционально)
+#}
+{% set showCount = showCount|default(false) %}
+{% set badgeClass = class|default('badge') %}
+
+{% if available > 0 %}
+    <span class="{{ badgeClass }} text-bg-success" title="В наличии: {{ available }} шт">
+        {% if showCount %}
+            {%- set av = available > 10 ? ">10" : available -%}
+            В наличии: {{ av }} шт.
+        {% else %}
+            В наличии
+        {% endif %}
+    </span>
+{% else %}
+    <span class="{{ badgeClass }} text-bg-danger">
+        Нет в наличии
+    </span>
+{% endif %}

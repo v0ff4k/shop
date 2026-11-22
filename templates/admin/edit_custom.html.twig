@@ -1,0 +1,54 @@
+{% extends '@SonataAdmin/CRUD/edit.html.twig' %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function() {
+            function formatState (state) {
+                if (!state.id || !state.element) {
+                    return state.text;
+                }
+
+                if (!state.element) {
+                    return state.text;
+                }
+
+                // 'element' refers to the original <option> HTML element
+                var baseUrl = $(state.element).data('img');
+
+                // If there is no image data, just return the normal text
+                if (!baseUrl) {
+                    return state.text;
+                }
+
+                // Build the HTML dynamically inside JS (safe from Symfony escaping)
+                var $state = $(
+                    '<span><img src="' + baseUrl + '" style="width: auto; max-height: 30px; object-fit: cover; margin-right: 8px; border-radius: 3px; vertical-align: middle;" /> ' + state.text + '</span>'
+                );
+
+                return $state;
+            };
+
+            // +1 element DYNAMICALLY after state
+            // <span class="select2-selection__clear" title="Remove all items" data-select2-id="22">×</span>
+
+            // Loop through each select element matching your class
+            $('.select2-with-images').each(function() {
+                var $select = $(this);
+
+                // Read Sonata's attribute from your PHP config: 'data-sonata-select2-allow-clear'
+                // jQuery automatically parses 'true' string to a boolean true
+                var shouldAllowClear = $select.data('sonata-select2-allow-clear') === true;
+
+                $select.select2({
+                    templateResult: formatState,
+                    templateSelection: formatState,
+                    width: '100%',
+                    allowClear: shouldAllowClear // Dynamically bound to template setting!
+                });
+            });
+
+
+        });
+    </script>
+{% endblock %}

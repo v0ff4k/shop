@@ -1,0 +1,89 @@
+# config/packages/messenger.yaml
+framework:
+    messenger:
+        failure_transport: failed
+
+        transports:
+            # Синхронный transport для команд которые должны выполняться сразу
+            sync: 'sync://'
+
+            # Асинхронная очередь для Command
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    use_notify: true
+                    check_delayed_interval: 60000
+                retry_strategy:
+                    max_retries: 3
+                    multiplier: 2
+                    delay: 1000
+
+            # Очередь для email уведомлений
+            email:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: email
+                retry_strategy:
+                    max_retries: 5
+                    multiplier: 3
+
+            # Очередь для обработки изображений
+            images:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: images
+                retry_strategy:
+                    max_retries: 3
+                    multiplier: 2
+
+            # Очередь для XML импорта/экспорта
+            xml:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: xml
+                retry_strategy:
+                    max_retries: 2
+                    multiplier: 2
+
+            # Dead Letter Queue для упавших сообщений
+            failed: 'doctrine://default?queue_name=failed'
+
+        default_bus: messenger.bus.command
+
+        buses:
+            # Шина для Command (синхронная по умолчанию)
+            messenger.bus.command:
+                middleware:
+                    - 'App\Infrastructure\Idempotency\IdempotencyMiddleware'
+                    - doctrine_transaction
+
+            # Шина для событий (асинхронная)
+            messenger.bus.event: []
+
+        routing:
+            # Команды корзины обрабатываются синхронно (в рамках HTTP запроса)
+            App\Application\Command\Cart\*: sync
+
+            # Создание заказа должно быть синхронным (возвращает Order номер)
+            App\Application\Command\CreateOrderCommand: sync
+
+            # Команды идут в async очередь по умолчанию
+            App\Application\Command\*: async
+
+            # Email команды идут в отдельную очередь
+            App\Application\Command\SendEmailCommand: email
+
+            # Обработка изображений идет в images очередь
+            App\Application\Command\ProcessProductImageCommand: images
+            App\Application\Command\ProcessCategoryImageCommand: images
+            App\Application\Command\ProcessUserImageCommand: images
+
+            # XML импорт/экспорт идет в xml очередь
+            App\Application\Command\XmlImportCommand: xml
+            App\Application\Command\XmlExportCommand: xml
+
+            # События идут в отдельную очередь
+            App\Domain\Shop\Event\ProductCreatedEvent: async
+            App\Domain\Shop\Event\ProductViewedEvent: async
+            App\Domain\Order\Event\OrderCreatedEvent: async
+            App\Domain\User\Event\UserRegisteredEvent: email

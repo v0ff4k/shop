@@ -1,0 +1,22 @@
+{# templates/includes/_product_image.html.twig #}
+{#
+    Шаблон для отображения изображения товара с fallback
+    Параметры:
+        - product: объект продукта
+        - class: дополнительные CSS классы (опционально)
+        - height: высота изображения (опционально, по умолчанию 150px)
+#}
+{% set imageClass = class|default('card-img-top') %}
+{% set imageHeight = height|default(150) %}
+
+{% if product.images|length > 0 %}
+    <img src="{{ asset_upload(product.images[0].path) }}"
+         class="{{ imageClass }}"
+         style="height: {{ imageHeight }}px; object-fit: contain; background: #f8f9fa;"
+         alt="{{ product.title }}">
+{% else %}
+    <div class="{{ imageClass }} bg-light d-flex align-items-center justify-content-center"
+         style="height: {{ imageHeight }}px;">
+        <span class="text-muted prod-img">Нет фото</span>
+    </div>
+{% endif %}

@@ -1,0 +1,11 @@
+<td class="sonata-ba-list-field sonata-ba-list-field-path text-center align-middle product-images" objectId="1">
+    {% if object.images is defined and object.images|length > 0 -%}
+
+        {%- for image in object.images -%}
+            {% include 'includes/_admin_product_image.html.twig' with {object: image, multiply: true} %}
+        {%- endfor -%}
+
+    {%- else %}
+        <p>[Нет изображений]</p>
+    {% endif %}
+</td>

@@ -1,0 +1,8 @@
+# config/packages/translation.yaml  was %env(LOCALE)%
+framework:
+    default_locale: 'ru'
+    translator:
+        default_path: '%kernel.project_dir%/translations'
+        fallbacks:
+            - en
+        providers:

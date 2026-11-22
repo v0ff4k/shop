@@ -1,0 +1,28 @@
+{# templates/includes/_empty_state.html.twig #}
+{#
+    Шаблон для отображения пустого состояния
+    Параметры:
+        - message: основное сообщение (string)
+        - subMessage: дополнительное сообщение (string, опционально)
+        - btnText: текст кнопки (string, опционально)
+        - btnRoute: маршрут кнопки (string, опционально)
+        - icon: иконка Bootstrap (string, по умолчанию 'info-circle')
+        - type: тип alert (string, по умолчанию 'info')
+#}
+{% set type = type|default('info') %}
+{% set icon = icon|default('info-circle') %}
+{% set message = message|default('') %}
+{% set subMessage = subMessage|default('') %}
+{% set btnText = btnText|default('') %}
+
+<div class="alert alert-{{ type }} mt-4">
+    <h5><i class="bi bi-{{ icon }}"></i> {{ message }}</h5>
+    {% if subMessage %}
+        <p class="mb-3">{{ subMessage }}</p>
+    {% endif %}
+    {% if btnText and btnRoute %}
+        <a href="{{ path(btnRoute) }}" class="btn btn-{{ type }}">
+            {{ btnText }}
+        </a>
+    {% endif %}
+</div>

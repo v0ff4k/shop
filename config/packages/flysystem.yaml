@@ -1,0 +1,29 @@
+# config/packages/flysystem.yaml
+parameters:
+    # Единые параметры путей для изображений(только имя папки!)
+    product.images.path: 'products'
+    category.images.path: 'categories'
+    user.images.path: 'users'
+    # Префиксы для
+    uploads.prefix: 'uploads/'
+    thumb.prefix: 'thumb/'
+    # Куда складывать загруженные XML для асинхронного импорта
+    xml.import.upload_dir: 'var/uploads/xml'
+
+# TODO add thumb.prefix = 'thumb/' or not needed ?!
+flysystem:
+    storages:
+        product.images.storage:
+            adapter: 'local'
+            options:
+                directory: '%kernel.project_dir%/public/%uploads.prefix%%product.images.path%'
+
+        category.images.storage:
+            adapter: 'local'
+            options:
+                directory: '%kernel.project_dir%/public/%uploads.prefix%%category.images.path%'
+
+        user.images.storage:
+            adapter: 'local'
+            options:
+                directory: '%kernel.project_dir%/public/%uploads.prefix%%user.images.path%'

@@ -1,20 +1,27 @@
 <?php
-// src/Store/ShopBundle/Entity/Product.php
-namespace Store\ShopBundle\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
+declare(strict_types=1);
+// src/Store/ShopBundle/Entity/Product.php
+
+namespace App\Store\ShopBundle\Entity;
+
 use Cocur\Slugify\Slugify;
+use DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 /**
- * @ORM\Entity(repositoryClass="Store\ShopBundle\Repository\ProductRepository")
+ * @ORM\Entity(repositoryClass="App\Store\ShopBundle\Repository\ProductRepository")
+ *
  * @ORM\Table(name="product")
  */
 class Product
 {
     /**
      * @ORM\Column(type="integer")
+     *
      * @ORM\Id
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     protected $id;
@@ -24,13 +31,11 @@ class Product
      */
     protected $title;
 
-
     /**
      * @ORM\Column(type="string", length=128, unique=true)
      */
-    protected $slug;    
-    
-    
+    protected $slug;
+
     /**
      * @ORM\Column(type="decimal", scale=2)
      */
@@ -43,20 +48,21 @@ class Product
 
     /**
      * @ORM\ManyToOne(targetEntity="Category", inversedBy="products")
+     *
      * @ORM\JoinColumn(name="сategory", referencedColumnName="id")
      */
     protected $category;
-   
+
     /**
      * @ORM\OneToMany(targetEntity="Productimage", mappedBy="product")
      */
     protected $image;
-    
+
     /**
      * @ORM\OneToMany(targetEntity="Orders", mappedBy="product")
      */
     protected $ord;
-    
+
     /**
      * @ORM\Column(name="available", type="integer")
      */
@@ -78,13 +84,13 @@ class Product
     protected $lastViewed;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
-        $this->category = new \Doctrine\Common\Collections\ArrayCollection();
-        $this->image = new \Doctrine\Common\Collections\ArrayCollection();
-        $this->ord = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->category = new ArrayCollection();
+        $this->image = new ArrayCollection();
+        $this->ord = new ArrayCollection();
         $this->added = new \DateTime();
     }
 
@@ -94,19 +100,20 @@ class Product
     }
 
     /**
-     * Get id
+     * Get title.
      *
-     * @return integer 
+     * @return string
      */
-    public function getId()
+    public function getTitle()
     {
-        return $this->id;
+        return $this->title;
     }
 
     /**
-     * Set title
+     * Set title.
      *
      * @param string $title
+     *
      * @return Product
      */
     public function setTitle($title)
@@ -119,42 +126,54 @@ class Product
     }
 
     /**
-     * Get title
+     * Get id.
      *
-     * @return string 
+     * @return int
      */
-    public function getTitle()
+    public function getId()
     {
-        return $this->title;
+        return $this->id;
     }
 
     /**
-     * Set slug
+     * Get slug.
      *
-     * @param string $slug
-     * @return Product
-     */
-    public function setSlug($slug)
-    {
-        $this->slug = $slug;
-        
-        return $this;
-    }
-
-    /**
-     * Get slug
-     *
-     * @return string 
+     * @return string
      */
     public function getSlug()
     {
         return $this->slug;
     }
-    
+
     /**
-     * Set price
+     * Set slug.
+     *
+     * @param string $slug
+     *
+     * @return Product
+     */
+    public function setSlug($slug)
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
+
+    /**
+     * Get price.
+     *
+     * @return string
+     */
+    public function getPrice()
+    {
+        return $this->price;
+    }
+
+    /**
+     * Set price.
      *
      * @param string $price
+     *
      * @return Product
      */
     public function setPrice($price)
@@ -165,19 +184,20 @@ class Product
     }
 
     /**
-     * Get price
+     * Get description.
      *
-     * @return string 
+     * @return string
      */
-    public function getPrice()
+    public function getDescription()
     {
-        return $this->price;
+        return $this->description;
     }
 
     /**
-     * Set description
+     * Set description.
      *
      * @param string $description
+     *
      * @return Product
      */
     public function setDescription($description)
@@ -188,19 +208,20 @@ class Product
     }
 
     /**
-     * Get description
+     * Get available.
      *
-     * @return string 
+     * @return int
      */
-    public function getDescription()
+    public function getAvailable()
     {
-        return $this->description;
+        return $this->available;
     }
 
     /**
-     * Set available
+     * Set available.
      *
-     * @param integer $available
+     * @param int $available
+     *
      * @return Product
      */
     public function setAvailable($available)
@@ -211,19 +232,20 @@ class Product
     }
 
     /**
-     * Get available
+     * Get added.
      *
-     * @return integer 
+     * @return \DateTime
      */
-    public function getAvailable()
+    public function getAdded()
     {
-        return $this->available;
+        return $this->added;
     }
 
     /**
-     * Set added
+     * Set added.
      *
      * @param \DateTime $added
+     *
      * @return Product
      */
     public function setAdded($added)
@@ -234,19 +256,20 @@ class Product
     }
 
     /**
-     * Get added
+     * Get viewed.
      *
-     * @return \DateTime 
+     * @return int
      */
-    public function getAdded()
+    public function getViewed()
     {
-        return $this->added;
+        return $this->viewed;
     }
 
     /**
-     * Set viewed
+     * Set viewed.
      *
-     * @param integer $viewed
+     * @param int $viewed
+     *
      * @return Product
      */
     public function setViewed($viewed)
@@ -257,19 +280,20 @@ class Product
     }
 
     /**
-     * Get viewed
+     * Get lastViewed.
      *
-     * @return integer 
+     * @return \DateTime
      */
-    public function getViewed()
+    public function getLastViewed()
     {
-        return $this->viewed;
+        return $this->lastViewed;
     }
 
     /**
-     * Set lastViewed
+     * Set lastViewed.
      *
      * @param \DateTime $lastViewed
+     *
      * @return Product
      */
     public function setLastViewed($lastViewed)
@@ -280,32 +304,9 @@ class Product
     }
 
     /**
-     * Get lastViewed
+     * Get category.
      *
-     * @return \DateTime 
-     */
-    public function getLastViewed()
-    {
-        return $this->lastViewed;
-    }
-
-    /**
-     * Set category
-     *
-     * @param \Store\ShopBundle\Entity\Category $category
-     * @return Product
-     */
-    public function setCategory(\Store\ShopBundle\Entity\Category $category = null)
-    {
-        $this->category = $category;
-
-        return $this;
-    }
-
-    /**
-     * Get category
-     *
-     * @return \Store\ShopBundle\Entity\Category 
+     * @return Category
      */
     public function getCategory()
     {
@@ -313,12 +314,23 @@ class Product
     }
 
     /**
-     * Add image
+     * Set category.
      *
-     * @param \Store\ShopBundle\Entity\Productimage $image
      * @return Product
      */
-    public function addImage(\Store\ShopBundle\Entity\Productimage $image)
+    public function setCategory(?Category $category = null)
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    /**
+     * Add image.
+     *
+     * @return Product
+     */
+    public function addImage(Productimage $image)
     {
         $this->image[] = $image;
 
@@ -326,19 +338,17 @@ class Product
     }
 
     /**
-     * Remove image
-     *
-     * @param \Store\ShopBundle\Entity\Productimage $image
+     * Remove image.
      */
-    public function removeImage(\Store\ShopBundle\Entity\Productimage $image)
+    public function removeImage(Productimage $image): void
     {
         $this->image->removeElement($image);
     }
 
     /**
-     * Get image
+     * Get image.
      *
-     * @return \Doctrine\Common\Collections\Collection 
+     * @return Collection
      */
     public function getImage()
     {
@@ -346,12 +356,11 @@ class Product
     }
 
     /**
-     * Add ord
+     * Add ord.
      *
-     * @param \Store\ShopBundle\Entity\Orders $ord
      * @return Product
      */
-    public function addOrd(\Store\ShopBundle\Entity\Orders $ord)
+    public function addOrd(Orders $ord)
     {
         $this->ord[] = $ord;
 
@@ -359,19 +368,17 @@ class Product
     }
 
     /**
-     * Remove ord
-     *
-     * @param \Store\ShopBundle\Entity\Orders $ord
+     * Remove ord.
      */
-    public function removeOrd(\Store\ShopBundle\Entity\Orders $ord)
+    public function removeOrd(Orders $ord): void
     {
         $this->ord->removeElement($ord);
     }
 
     /**
-     * Get ord
+     * Get ord.
      *
-     * @return \Doctrine\Common\Collections\Collection 
+     * @return Collection
      */
     public function getOrd()
     {

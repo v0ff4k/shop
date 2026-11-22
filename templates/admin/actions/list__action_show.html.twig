@@ -1,0 +1,11 @@
+{# templates/admin/actions/list__action_show.html.twig #}
+{#{% extends '@SonataAdmin/CRUD/list__action_show.html.twig' %}#}
+{# Force the configuration check to think it's 'icon' #}
+
+{% if admin.hasAccess('show', object) and admin.hasRoute('show') %}
+    <a
+        href="{{ admin.generateObjectUrl('show', object, actions.link_parameters|default([])) }}"
+        class="btn btn-sm btn-default view_link border rounded-2"
+        title="{{ 'action_show'|trans({}, 'SonataAdminBundle') }}"
+    ><i class="fas fa-eye" aria-hidden="true"></i></a>
+{% endif %}

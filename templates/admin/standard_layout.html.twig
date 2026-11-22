@@ -1,0 +1,34 @@
+{# templates/admin/standard_layout.html.twig #}
+{#
+    Кастомный layout Sonata Admin.
+    Наследует современный layout Sonata 4 и переопределяет только проектное:
+    - подключение css/main.css;
+    - ссылку на витрину;
+    - отображение имени пользователя в верхнем меню.
+#}
+{% extends '@SonataAdmin/standard_layout.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('css/main.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block sonata_top_nav_menu_user_block %}
+    {% if app.user and is_granted('ROLE_SONATA_ADMIN') %}
+        <li class="dropdown2">
+            <a>
+                {{ app.user.fullName ?: app.user.username }}
+                <i class="fa fa-chevron-left fa-fw" aria-hidden="true"></i>
+                {{ app.user.username }}
+                <i class="fa fa-chevron-right fa-fw" aria-hidden="true"></i>
+            </a>
+        </li>
+    {% endif %}
+    {{ parent() }}
+{% endblock %}
+
+{% block side_bar_after_nav_content %}
+    <a href="{{ path('shop_homepage') }}" rel="noreferrer">
+        <i class="fa fa-home" aria-hidden="true"></i> Home
+    </a>
+{% endblock %}

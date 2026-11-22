@@ -1,0 +1,21 @@
+{# templates/emails/order_confirmation.html.twig #}
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Заказ {{ orderNumber }} подтверждён{% endblock %}
+
+{% block content %}
+<h2>Ваш заказ подтверждён!</h2>
+
+<p>Спасибо за ваш заказ. Мы получили его и приступаем к обработке.</p>
+
+<div class="info-box">
+    <p><strong>Номер заказа:</strong> {{ orderNumber }}</p>
+    <p><strong>Общая сумма:</strong> {{ total|number_format(2, '.', ' ') }} ₽</p>
+</div>
+
+<p>Мы отправим вам ещё одно письмо, когда заказ будет отправлен.</p>
+
+<a href="{{ url('user_profile') }}" class="button">Отслеживать заказ</a>
+
+<p>Если у вас возникнут вопросы, ответьте на это письмо или свяжитесь с нашей службой поддержки.</p>
+{% endblock %}

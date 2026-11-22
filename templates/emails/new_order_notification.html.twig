@@ -1,0 +1,21 @@
+{# templates/emails/new_order_notification.html.twig #}
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Новый заказ {{ orderNumber }}{% endblock %}
+
+{% block content %}
+<h2>Новый заказ!</h2>
+
+<p>Поступил новый заказ в магазине SHOP.</p>
+
+<div class="info-box">
+    <p><strong>Номер заказа:</strong> {{ orderNumber }}</p>
+    <p><strong>Общая сумма:</strong> {{ total|number_format(2, '.', ' ') }} ₽</p>
+</div>
+
+<p>Пожалуйста, обработайте заказ как можно скорее.</p>
+
+<a href="{{ url('admin_order_show', {id: orderNumber}) }}" class="button">Перейти к заказу</a>
+
+<p>Не забудьте обновить статус заказа после обработки.</p>
+{% endblock %}

@@ -1,0 +1,42 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    ############## Admin classes ##
+    store_admin.admin.category:
+        class: App\Store\AdminBundle\Admin\CategoryAdmin
+        arguments:
+            - '@App\Infrastructure\Storage\FileUploadService'
+            - '@App\Infrastructure\Persistence\Repository\CategoryRepository'
+        tags:
+            - { name: sonata.admin, manager_type: orm, model_class: App\Domain\Shop\Entity\Category, group: "Разделы", label: Категории }
+
+    store_admin.admin.customer:
+        class: App\Store\AdminBundle\Admin\CustomerAdmin
+        arguments:
+            - '@Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface'
+            - '@Symfony\Bundle\SecurityBundle\Security'
+            - '@App\Infrastructure\Storage\FileUploadService'
+        tags:
+            - { name: sonata.admin, manager_type: orm, model_class: App\Domain\User\Entity\User, group: "Пользователи", label: Пользователи }
+
+    store_admin.admin.orders:
+        class: App\Store\AdminBundle\Admin\OrderAdmin
+        tags:
+            - { name: sonata.admin, manager_type: orm, model_class: App\Domain\Order\Entity\Order, group: "Заказы", label: Заказы }
+
+    store_admin.admin.product:
+        class: App\Store\AdminBundle\Admin\ProductAdmin
+        arguments:
+            # Targets the explicit 'rtf_sanitizer' profile we built in framework.html_sanitizer
+            $rtfSanitizer: '@html_sanitizer.sanitizer.default'
+            $fileUploadService: '@App\Infrastructure\Storage\FileUploadService'
+        tags:
+            - { name: sonata.admin, manager_type: orm, model_class: App\Domain\Shop\Entity\Product, group: "Товары", label: Товар }
+
+    store_admin.admin.productimage:
+        class: App\Store\AdminBundle\Admin\ProductimageAdmin
+        tags:
+            - { name: sonata.admin, manager_type: orm, model_class: App\Domain\Shop\Entity\ProductImage, group: "Товары", label: Изображения }

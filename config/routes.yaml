@@ -1,0 +1,228 @@
+# config/routes.yaml
+
+# Shop routes
+shop_homepage:
+    path: /
+    controller: App\UI\Controller\Shop\HomeController::__invoke
+
+shop_category_index:
+    path: /category
+    controller: App\UI\Controller\Shop\CategoryIndexController::__invoke
+    methods: [GET]
+
+shop_category_show:
+    path: /category/{slug}
+    controller: App\UI\Controller\Shop\CategoryShowController::__invoke
+    methods: [GET]
+    requirements:
+        slug: '[a-z0-9-]+'
+
+shop_product_index:
+    path: /products
+    controller: App\UI\Controller\Shop\ProductIndexController::__invoke
+    methods: [GET]
+
+shop_product_show:
+    path: /product/{slug}
+    controller: App\UI\Controller\Shop\ProductShowController::__invoke
+    methods: [GET]
+    requirements:
+        slug: '[a-z0-9-]+'
+
+shop_product_search:
+    path: /search
+    controller: App\UI\Controller\Shop\ProductSearchController::__invoke
+    methods: [GET]
+
+shop_cart_index:
+    path: /cart
+    controller: App\UI\Controller\Shop\CartIndexController::__invoke
+    methods: [GET]
+
+shop_cart_add:
+    path: /cart/add
+    controller: App\UI\Controller\Shop\CartAddController::__invoke
+    methods: [POST]
+
+shop_cart_remove:
+    path: /cart/remove/{productId}
+    controller: App\UI\Controller\Shop\CartRemoveController::__invoke
+    methods: [POST]
+
+shop_cart_update:
+    path: /cart/update/{productId}
+    controller: App\UI\Controller\Shop\CartUpdateController::__invoke
+    methods: [POST]
+
+shop_cart_clear:
+    path: /cart/clear
+    controller: App\UI\Controller\Shop\CartClearController::__invoke
+    methods: [POST]
+
+shop_order_create:
+    path: /order/create
+    controller: App\UI\Controller\Shop\OrderController::create
+    methods: [GET]
+
+shop_order_create_post:
+    path: /order/create
+    controller: App\UI\Controller\Shop\OrderController::__invoke
+    methods: [POST]
+
+shop_order_success:
+    path: /order/success/{orderNumber}
+    controller: App\UI\Controller\Shop\OrderController::success
+    methods: [GET]
+
+# User routes
+user_register:
+    path: /register
+    controller: App\UI\Controller\User\RegistrationController::register
+    methods: [GET]
+
+user_register_post:
+    path: /register
+    controller: App\UI\Controller\User\RegistrationController::__invoke
+    methods: [POST]
+
+user_login:
+    path: /login
+    controller: App\UI\Controller\User\SecurityController::login
+    methods: [GET, POST]
+
+# Firewall check path - роут не используется, перехватывается firewall
+user_login_check:
+    path: /login_check
+
+user_logout:
+    path: /logout
+    controller: App\UI\Controller\User\SecurityController::logout
+
+user_profile:
+    path: /profile
+    controller: App\UI\Controller\User\ProfileIndexController::__invoke
+    methods: [GET]
+
+user_profile_update:
+    path: /profile
+    controller: App\UI\Controller\User\ProfileUpdateController::__invoke
+    methods: [POST]
+
+user_orders:
+    path: /profile/orders
+    controller: App\UI\Controller\User\UserOrdersController::__invoke
+    methods: [GET]
+
+# API routes
+api_login:
+    path: /api/login
+    controller: App\UI\Controller\Api\AuthController::login
+    methods: [POST]
+
+api_refresh:
+    path: /api/refresh
+    controller: App\UI\Controller\Api\AuthController::refresh
+    methods: [POST]
+
+api_products:
+    path: /api/products
+    controller: App\UI\Controller\Api\ProductController::index
+    methods: [GET]
+
+api_product:
+    path: /api/product/{id}
+    controller: App\UI\Controller\Api\ProductController::show
+    methods: [GET]
+
+api_product_suggest:
+    path: /api/products/suggest
+    controller: App\UI\Controller\Api\ProductSuggestController::__invoke
+    methods: [GET]
+
+api_metrics:
+    path: /metrics
+    controller: App\UI\Controller\MetricsController::prometheus
+    methods: [GET]
+
+api_async_job_status:
+    path: /api/async-jobs/{jobId}
+    controller: App\UI\Controller\Api\AsyncJobStatusController::__invoke
+    methods: [GET]
+
+api_async_jobs:
+    path: /api/async-jobs
+    controller: App\UI\Controller\Api\AsyncJobListController::__invoke
+    methods: [GET]
+
+# Circuit Breaker API routes
+api_circuit_breaker_stats:
+    path: /api/circuit-breaker/stats
+    controller: App\UI\Controller\Api\CircuitBreakerListController::__invoke
+    methods: [GET]
+
+api_circuit_breaker_state:
+    path: /api/circuit-breaker/{service}/state
+    controller: App\UI\Controller\Api\CircuitBreakerStateController::__invoke
+    methods: [GET]
+
+api_circuit_breaker_reset:
+    path: /api/circuit-breaker/{service}/reset
+    controller: App\UI\Controller\Api\CircuitBreakerResetController::__invoke
+    methods: [POST]
+
+api_circuit_breaker_reset_all:
+    path: /api/circuit-breaker/reset-all
+    controller: App\UI\Controller\Api\CircuitBreakerResetAllController::__invoke
+    methods: [POST]
+
+# Admin monitor routes
+admin_monitor:
+    path: /admin/monitor
+    controller: App\UI\Controller\Admin\SystemMonitorController::__invoke
+    methods: [GET]
+
+admin_monitor_live:
+    path: /admin/monitor/live
+    controller: App\UI\Controller\Admin\SystemMonitorController::liveData
+    methods: [GET]
+
+admin_monitor_block:
+    path: /admin/monitor/block/{block}
+    controller: App\UI\Controller\Admin\SystemMonitorController::blockData
+    methods: [GET]
+
+admin_monitor_logs:
+    path: /admin/monitor/logs
+    controller: App\UI\Controller\Admin\SystemMonitorController::logsData
+    methods: [GET]
+
+admin_monitor_clear_cache:
+    path: /admin/monitor/clear-cache
+    controller: App\UI\Controller\Admin\SystemMonitorController::clearCache
+    methods: [POST]
+
+admin_xml_import:
+    path: /admin/import/xml
+    controller: App\UI\Controller\Admin\XmlImportController::__invoke
+    methods: [POST]
+
+admin_xml_export:
+    path: /admin/export/xml
+    controller: App\UI\Controller\Admin\XmlExportController::__invoke
+    methods: [POST]
+
+admin_monitor_async_job_retry:
+    path: /admin/monitor/async-jobs/{jobId}/retry
+    controller: App\UI\Controller\Admin\AsyncJobRetryController::__invoke
+    methods: [POST]
+
+# Seller XML import/export routes
+seller_xml_import:
+    path: /seller/import/xml
+    controller: App\UI\Controller\Seller\XmlImportController::__invoke
+    methods: [POST]
+
+seller_xml_export:
+    path: /seller/export/xml
+    controller: App\UI\Controller\Seller\XmlExportController::__invoke
+    methods: [POST]

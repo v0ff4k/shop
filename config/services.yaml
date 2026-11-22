@@ -1,0 +1,383 @@
+imports:
+    - { resource: services_admin.yaml }
+
+# TODO  move to params.yaml
+parameters:
+    app.doctrine_tracing_enabled: '%env(bool:DOCTRINE_TRACING_ENABLED)%'
+    app.doctrine_tracing_log_queries: '%env(bool:DOCTRINE_TRACING_LOG_QUERIES)%'
+
+
+
+# config/services.yaml
+# TODO split into smaller(services.yaml) ones
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        bind:
+            string $projectDir: '%kernel.project_dir%'
+
+    app.form.registration:
+        class: App\Store\UserBundle\Form\RegistrationType
+        tags:
+            - { name: form.type, alias: app_user_registration }
+
+    app.form.edition:
+        class: App\Store\UserBundle\Form\ProfileType
+        tags:
+            - { name: form.type, alias: app_user_edition }
+
+    # PathHelper — единый хелпер для путей
+    App\Infrastructure\Helper\PathHelper:
+        arguments:
+            $uploadsPrefix: '%uploads.prefix%'
+            $productPath: '%product.images.path%'
+            $categoryPath: '%category.images.path%'
+            $userPath: '%user.images.path%'
+            $thumbPrefix: '%thumb.prefix%'
+
+    # XML import: файл сохраняется на диск, в очередь уходит только путь
+    App\Infrastructure\ImportExport\XmlImportStorage:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $relativeDir: '%xml.import.upload_dir%'
+
+    App\Infrastructure\ImportExport\XmlImportExportService:
+        arguments:
+            $batchSize: '%env(int:XML_IMPORT_BATCH_SIZE)%'
+
+    # Email Spool Service — для dev режима сохраняет письма в var/spool/email/
+    App\Infrastructure\Mailing\EmailSpoolService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $spoolEnabled: '%env(bool:EMAIL_SPOOL_ENABLED)%'
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Store/'
+            - '../src/UI/EventListener/HttpCacheListener.php'
+            - '../src/UI/EventListener/CircuitBreakerMetricsListener.php'
+            - '../src/Command/CircuitBreakerStatusCommand.php'
+            - '../src/Infrastructure/Jwt/JwtService.php'
+
+
+    # Admin classes (исключены из общего ресурса, регистрируем явно)
+    # src/Store/AdminBundle/Resources/config/services.yaml
+
+
+    # HTTP Cache Listener (временно отключено — проблема с автонастройкой Symfony 7)
+    # App\UI\EventListener\HttpCacheListener:
+    #     tags:
+    #         - { name: kernel.event_listener, event: kernel.response, method: 'onKernelResponse', priority: -10 }
+
+    # Worker Run Command — алиас для ReceiverInterface
+    Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface:
+        alias: messenger.transport.async
+        public: false
+    App\Infrastructure\EventDispatcher\EventDispatcherInterface:
+        class: App\Infrastructure\EventDispatcher\SymfonyEventDispatcher
+        arguments:
+            $eventDispatcher: '@event_dispatcher'
+        autowire: false
+        autoconfigure: false
+    App\UI\EventListener\PrometheusMetricsListener:
+        arguments:
+            $storage: '@App\Infrastructure\Prometheus\PrometheusStorage'
+        tags: ['kernel.event_subscriber']
+
+    # Prometheus Storage
+    App\Infrastructure\Prometheus\PrometheusStorage:
+        arguments:
+            $host: '%env(REDIS_HOST)%'
+            $port: '%env(int:REDIS_PORT)%'
+        autowire: false
+        autoconfigure: false
+
+    App\Infrastructure\Prometheus\PrometheusStorageInterface:
+        alias: App\Infrastructure\Prometheus\PrometheusStorage
+
+    # Infrastructure services
+    App\Infrastructure\:
+        resource: '../src/Infrastructure/*'
+        exclude:
+            - '../src/Infrastructure/CompilerPass/PrometheusMetricsPass.php'
+            - '../src/Infrastructure/Cache/RedisCacheService.php'
+            - '../src/Infrastructure/Idempotency/RedisIdempotencyChecker.php'
+            - '../src/Infrastructure/External/CircuitBreaker/CircuitBreakerMetrics.php'
+            - '../src/Infrastructure/Jwt/JwtService.php'
+            - '../src/Infrastructure/OpenTelemetry/OpenTelemetryTracer.php'
+            - '../src/Infrastructure/Persistence/EventListener/DoctrineOpenTelemetryLogger.php'
+        public: false
+
+    # Controllers are public and tagged
+    App\UI\Controller\:
+        resource: '../src/UI/Controller/'
+        tags: ['controller.service_arguments']
+
+    App\UI\Controller\Admin\SystemMonitorController:
+        arguments:
+            $prometheusUrl: '%env(PROMETHEUS_URL)%'
+            $grafanaUrl: '%env(GRAFANA_URL)%'
+            $jaegerUrl: '%env(JAEGER_URL)%'
+            $prometheusInternalUrl: '%env(PROMETHEUS_INTERNAL_URL)%'
+            $grafanaInternalUrl: '%env(GRAFANA_INTERNAL_URL)%'
+            $jaegerInternalUrl: '%env(JAEGER_INTERNAL_URL)%'
+        tags: ['controller.service_arguments']
+
+    # Request DTOs
+    App\UI\Request\:
+        resource: '../src/UI/Request/*'
+
+    # UI Services
+    App\UI\Service\:
+        resource: '../src/UI/Service/*'
+
+    # Response classes
+    App\UI\Response\:
+        resource: '../src/UI/Response/*'
+
+    # Idempotency services
+    App\Application\Idempotency\IdempotencyCheckerInterface:
+        class: App\Infrastructure\Idempotency\RedisIdempotencyChecker
+
+    App\Infrastructure\Idempotency\IdempotencyMiddleware:
+        arguments:
+            $idempotencyChecker: '@App\Infrastructure\Idempotency\RedisIdempotencyChecker'
+        autowire: false
+
+    # DTO Resolver - должен быть зарегистрирован с тегом controller.argument_value_resolver
+    App\UI\Resolver\RequestDtoResolver:
+        tags:
+            - { name: controller.argument_value_resolver, priority: 100 }
+
+    # Response Subscriber - обработка ViewResponse и RedirectResponse
+    App\UI\EventSubscriber\ControllerResponseSubscriber:
+        tags: ['kernel.event_subscriber']
+
+    # Domain Event Logger
+    App\UI\EventSubscriber\DomainEventLoggerSubscriber:
+        tags: ['kernel.event_subscriber']
+
+    # 404 Logger - логирует все 404 ошибки (битые ссылки, изображения и т.д.)
+    App\UI\EventSubscriber\NotFoundLoggerSubscriber:
+        arguments:
+            $notFoundLogger: '@monolog.logger.not_found'
+        tags: ['kernel.event_subscriber']
+
+    # Twig Error Logger - логирует все Twig и критические ошибки
+    App\UI\EventSubscriber\TwigErrorLoggerSubscriber:
+        arguments:
+            $twigLogger: '@monolog.logger.twig'
+            $errorLogger: '@monolog.logger'
+            $criticalLogger: '@monolog.logger.critical'
+        tags: ['kernel.event_subscriber']
+
+    App\UI\EventSubscriber\OpenTelemetrySubscriber:
+        arguments:
+            $tracer: '@App\Infrastructure\OpenTelemetry\OpenTelemetryTracer'
+        tags: ['kernel.event_subscriber']
+
+    # HTTP Cache Subscriber
+    App\UI\EventSubscriber\HttpCacheSubscriber:
+        arguments:
+            $defaultMaxAge: 3600
+            $sharedMaxAge: 3600
+        tags: ['kernel.event_subscriber']
+
+    # Order Email Subscriber
+    App\UI\EventSubscriber\OrderEmailSubscriber:
+        arguments:
+            $emailNotification: '@App\Application\Service\EmailNotificationService'
+        tags: ['kernel.event_subscriber']
+
+    # Doctrine OpenTelemetry Logger (временно отключено — DBAL 4 удалил SQLLogger, требуется полная переделка)
+    # App\Infrastructure\Persistence\EventListener\DoctrineOpenTelemetryLogger:
+    #     arguments:
+    #         $tracer: '@App\Infrastructure\OpenTelemetry\OpenTelemetryTracer'
+    #         $slowQueryThreshold: 0.1
+    #     tags: ['doctrine.middleware']
+
+    # Command Bus - синхронная шина для Command с поддержкой идемпотентности
+    App\Application\CommandBus\SyncCommandBus:
+        arguments:
+            $commandBus: '@messenger.bus.command'
+            $idempotencyChecker: '@App\Application\Idempotency\IdempotencyCheckerInterface'
+
+    App\Application\CommandBus\CommandBusInterface:
+        alias: App\Application\CommandBus\SyncCommandBus
+
+    # Query services
+    App\Application\Query\:
+        resource: '../src/Application/Query/*'
+
+    # Commands and Handlers with Messenger integration
+    App\Application\Command\:
+        resource: '../src/Application/Command/*'
+
+    App\Application\Handler\:
+        resource: '../src/Application/Handler/*'
+        tags:
+            - { name: 'messenger.message_handler', bus: 'messenger.bus.command', from_transport: 'async' }
+
+    # Cart handlers (synchronous)
+    App\Application\Handler\Cart\AddToCartCommandHandler:
+        tags:
+            - { name: 'messenger.message_handler', bus: 'messenger.bus.command', from_transport: 'sync' }
+
+    # Email handlers
+    App\Application\Handler\SendEmailHandler:
+        tags:
+            - { name: 'messenger.message_handler', bus: 'messenger.bus.command', from_transport: 'email' }
+
+
+    # Image processing handlers
+    App\Application\Handler\ProcessProductImageHandler:
+        tags:
+            - { name: 'messenger.message_handler', bus: 'messenger.bus.command', from_transport: 'images' }
+
+    App\Application\Handler\ProcessCategoryImageHandler:
+        tags:
+            - { name: 'messenger.message_handler', bus: 'messenger.bus.command', from_transport: 'images' }
+
+    App\Application\Handler\ProcessUserImageHandler:
+        tags:
+            - { name: 'messenger.message_handler', bus: 'messenger.bus.command', from_transport: 'images' }
+
+
+    # XML handlers
+    App\Application\Handler\XmlExportHandler:
+        tags:
+            - { name: 'messenger.message_handler', bus: 'messenger.bus.command', from_transport: 'xml' }
+
+    App\Application\Handler\XmlImportHandler:
+        tags:
+            - { name: 'messenger.message_handler', bus: 'messenger.bus.command', from_transport: 'xml' }
+
+    # Repository implementations
+    App\Infrastructure\Persistence\Repository\:
+        resource: '../src/Infrastructure/Persistence/Repository/*'
+
+    # Batch processing
+    App\Infrastructure\Persistence\Batch\:
+        resource: '../src/Infrastructure/Persistence/Batch/*'
+
+    # Event Listeners and Subscribers
+    App\UI\EventListener\:
+        resource: '../src/UI/EventListener/*'
+        tags: ['kernel.event_listener']
+
+    App\UI\EventSubscriber\:
+        resource: '../src/UI/EventSubscriber/*'
+        tags: ['kernel.event_subscriber']
+
+    # Compiler Passes
+    App\Infrastructure\CompilerPass\:
+        resource: '../src/Infrastructure/CompilerPass/*'
+
+    App\Infrastructure\Persistence\Middleware\DoctrineTracingMiddleware:
+        arguments:
+            $tracer: '@App\Infrastructure\OpenTelemetry\OpenTelemetryTracer'
+            $logger: '@logger'
+            $enabled: '%app.doctrine_tracing_enabled%'
+            $logQueries: '%app.doctrine_tracing_log_queries%'
+        tags:
+            - { name: doctrine.middleware, connection: default, priority: 20 }
+
+    # Console Commands
+    App\Command\:
+        resource: '../src/Command/*'
+        tags: ['console.command']
+
+    App\Infrastructure\Idempotency\RedisIdempotencyChecker:
+        arguments:
+            $redis: '@Redis'
+            $ttl: 86400
+        autowire: false
+
+    # Circuit Breaker services
+    App\Infrastructure\Resilience\CircuitBreakerFactory:
+        arguments:
+            $redis: '@Redis'
+            $logger: '@logger'
+            $defaultFailureThreshold: 5
+            $defaultSuccessThreshold: 3
+            $defaultOpenTimeout: 30
+        autowire: false
+
+    App\Infrastructure\Resilience\CircuitBreakerManager:
+        arguments:
+            $factory: '@App\Infrastructure\Resilience\CircuitBreakerFactory'
+        autowire: false
+
+    # Payment Gateway Client with Circuit Breaker
+    App\Infrastructure\External\PaymentGatewayClient:
+        arguments:
+            $circuitBreakerFactory: '@App\Infrastructure\Resilience\CircuitBreakerFactory'
+            $apiKey: '%env(PAYMENT_API_KEY)%'
+            $baseUrl: '%env(PAYMENT_API_URL)%'
+        autowire: false
+
+    # Email Notification Service
+    App\Application\Service\EmailNotificationService:
+        arguments:
+            $emailBus: '@messenger.bus.event'
+            $twig: '@twig'
+            $fromEmail: '%env(MAILER_FROM)%'
+        autowire: true
+
+    # Cache services
+    App\Infrastructure\Cache\RedisCacheService:
+        arguments:
+            $redis: '@Redis'
+            $defaultTtl: 3600
+        autowire: false
+        public: false
+
+    App\Infrastructure\Cache\CacheInvalidationService:
+        arguments:
+            $cache: '@App\Infrastructure\Cache\RedisCacheService'
+            $logger: '@logger'
+        autowire: false
+        public: false
+
+    # ProductQueryService with cache
+    App\Application\Query\ProductQueryService:
+        arguments:
+            $connection: '@doctrine.dbal.default_connection'
+            $cache: '@App\Infrastructure\Cache\RedisCacheService'
+            $cacheInvalidation: '@App\Infrastructure\Cache\CacheInvalidationService'
+            $productSearchService: '@App\Infrastructure\Search\ProductSearchService'
+            $logger: '@monolog.logger.search'
+        autowire: false
+
+    # Elasticsearch services (через Elastica Client напрямую, без бандла)
+    Elastica\Client:
+        arguments:
+            - hosts: ['http://%env(ELASTICSEARCH_HOST)%:%env(int:ELASTICSEARCH_PORT)%']
+
+    App\Infrastructure\Search\ProductIndexer:
+        arguments:
+            $elasticaClient: '@Elastica\Client'
+        autowire: false
+        public: true
+
+    App\Infrastructure\Persistence\Repository\ProductRepository:
+        public: true
+
+    App\Domain\Shop\Repository\ProductRepositoryInterface:
+        alias: App\Infrastructure\Persistence\Repository\ProductRepository
+        public: true
+
+    App\Domain\User\Repository\UserRepositoryInterface:
+        alias: App\Infrastructure\Persistence\Repository\UserRepository
+        public: true
+
+    App\Infrastructure\Search\ProductSearchService:
+        arguments:
+            $elasticaClient: '@Elastica\Client'
+            $logger: '@monolog.logger.search'
+        autowire: false

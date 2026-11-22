@@ -1,32 +1,40 @@
 <?php
+
+declare(strict_types=1);
 // src/ShopBundle/Entity/Orders.php
 
-namespace Store\ShopBundle\Entity;
+namespace App\Store\ShopBundle\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
+use DateTime;
+use Doctrine\Common\Collections\ArrayCollection;
 
 /**
  * @ORM\Entity
+ *
  * @ORM\Table(name="orders")
  */
 class Orders
 {
-    //define constans for sold state
-    const SOLD_PREPARED = false;
-    const SOLD_DONE = true;
-    
+    // define constans for sold state
+    public const SOLD_PREPARED = false;
+    public const SOLD_DONE = true;
+
     /**
      * @ORM\Column(type="integer")
+     *
      * @ORM\Id
+     *
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     protected $id;
 
     /**
-     * @todo In template add ajaxed Country+city suggestion based on user input 
+     * @todo In template add ajaxed Country+city suggestion based on user input
+     *
      * @ORM\Column(name="shipping", type="string", length=255)
+     *
      * @Assert\NotBlank(message="Please enter shipping address")
+     *
      * @Assert\Length(
      *     min=20,
      *     max=255,
@@ -38,11 +46,14 @@ class Orders
 
     /**
      * @ORM\Column(name="quantity", type="integer")
+     *
      * @Assert\Type(
      *     type="integer",
      *     message="The value {{ value }} is not a valid {{ type }}."
      * )
+     *
      * @Assert\NotBlank()
+     *
      * @Assert\GreaterThan(0)
      */
     protected $quantity;
@@ -50,16 +61,18 @@ class Orders
     /**
      * @ORM\Column(name="sold", type="boolean", nullable=false)
      */
-    protected $sold = Orders::SOLD_PREPARED;
+    protected $sold = self::SOLD_PREPARED;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Product", inversedBy="ord") 
+     * @ORM\ManyToOne(targetEntity="Product", inversedBy="ord")
+     *
      * @ORM\JoinColumn(name="product", referencedColumnName="id")
      */
     protected $product;
 
     /**
      * @ORM\ManyToOne(targetEntity="Customer", inversedBy="ord")
+     *
      * @ORM\JoinColumn(name="customer", referencedColumnName="id")
      */
     protected $customer;
@@ -75,36 +88,46 @@ class Orders
     protected $edited;
 
     /**
-     * Constructor
+     * Constructor.
      */
     public function __construct()
     {
         $this->edited = new \DateTime();
-        $this->product = new \Doctrine\Common\Collections\ArrayCollection();
-        $this->customer = new \Doctrine\Common\Collections\ArrayCollection();
-        //$this->sold = Orders::SOLD_PREPARED; 
+        $this->product = new ArrayCollection();
+        $this->customer = new ArrayCollection();
+        // $this->sold = Orders::SOLD_PREPARED;
     }
 
-//    public function __toString()
-//    {
-//        return $this->getId();
-//    }
+    //    public function __toString()
+    //    {
+    //        return $this->getId();
+    //    }
 
     /**
-     * Get id
+     * Get id.
      *
-     * @return integer 
+     * @return int
      */
     public function getId()
     {
         return $this->id;
     }
 
+    /**
+     * Get shipping.
+     *
+     * @return string
+     */
+    public function getShipping()
+    {
+        return $this->shipping;
+    }
 
     /**
-     * Set shipping
+     * Set shipping.
      *
      * @param string $shipping
+     *
      * @return Order
      */
     public function setShipping($shipping)
@@ -115,19 +138,20 @@ class Orders
     }
 
     /**
-     * Get shipping
+     * Get quantity.
      *
-     * @return string 
+     * @return int
      */
-    public function getShipping()
+    public function getQuantity()
     {
-        return $this->shipping;
+        return $this->quantity;
     }
 
     /**
-     * Set quantity
+     * Set quantity.
      *
-     * @param integer $quantity
+     * @param int $quantity
+     *
      * @return Order
      */
     public function setQuantity($quantity)
@@ -138,19 +162,20 @@ class Orders
     }
 
     /**
-     * Get quantity
+     * Get sold.
      *
-     * @return integer 
+     * @return tinyint
      */
-    public function getQuantity()
+    public function getSold()
     {
-        return $this->quantity;
+        return $this->sold;
     }
 
     /**
-     * Set sold
+     * Set sold.
      *
      * @param tinyint $sold
+     *
      * @return Order
      */
     public function setSold($sold)
@@ -161,19 +186,20 @@ class Orders
     }
 
     /**
-     * Get sold
+     * Get created.
      *
-     * @return tinyint 
+     * @return \DateTime
      */
-    public function getSold()
+    public function getCreated()
     {
-        return $this->sold;
+        return $this->created;
     }
 
     /**
-     * Set created
+     * Set created.
      *
      * @param \DateTime $created
+     *
      * @return Order
      */
     public function setCreated($created)
@@ -184,19 +210,20 @@ class Orders
     }
 
     /**
-     * Get created
+     * Get edited.
      *
-     * @return \DateTime 
+     * @return \DateTime
      */
-    public function getCreated()
+    public function getEdited()
     {
-        return $this->created;
+        return $this->edited;
     }
 
     /**
-     * Set edited
+     * Set edited.
      *
      * @param \DateTime $edited
+     *
      * @return Order
      */
     public function setEdited($edited)
@@ -207,32 +234,9 @@ class Orders
     }
 
     /**
-     * Get edited
+     * Get product.
      *
-     * @return \DateTime 
-     */
-    public function getEdited()
-    {
-        return $this->edited;
-    }
-
-    /**
-     * Set product
-     *
-     * @param \Store\ShopBundle\Entity\Product $product
-     * @return Order
-     */
-    public function setProduct(\Store\ShopBundle\Entity\Product $product = null)
-    {
-        $this->product = $product;
-
-        return $this;
-    }
-
-    /**
-     * Get product
-     *
-     * @return \Store\ShopBundle\Entity\Product 
+     * @return Product
      */
     public function getProduct()
     {
@@ -240,25 +244,36 @@ class Orders
     }
 
     /**
-     * Set customer
+     * Set product.
      *
-     * @param \Store\ShopBundle\Entity\Customer $customer
      * @return Order
      */
-    public function setCustomer(\Store\ShopBundle\Entity\Customer $customer = null)
+    public function setProduct(?Product $product = null)
     {
-        $this->customer = $customer;
+        $this->product = $product;
 
         return $this;
     }
 
     /**
-     * Get customer
+     * Get customer.
      *
-     * @return \Store\ShopBundle\Entity\Customer 
+     * @return Customer
      */
     public function getCustomer()
     {
         return $this->customer;
+    }
+
+    /**
+     * Set customer.
+     *
+     * @return Order
+     */
+    public function setCustomer(?Customer $customer = null)
+    {
+        $this->customer = $customer;
+
+        return $this;
     }
 }
