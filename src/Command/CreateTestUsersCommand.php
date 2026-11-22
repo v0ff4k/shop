@@ -127,7 +127,7 @@ HELP
             $this->em->persist($user);
             $this->em->flush();
 
-            $io->success("✅ {$userData['username']} / {$userData['email']} / пароль: {$userData['password']}");
+            $io->success(" {$userData['username']} / {$userData['email']} / пароль: {$userData['password']}");
             ++$created;
         }
 

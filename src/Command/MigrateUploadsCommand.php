@@ -60,6 +60,9 @@ final class MigrateUploadsCommand extends Command
             $this->migrateFiles($io, $oldDir, $newDir, true);
         }
 
+        // Удаляем старые каталоги с заглавными буквами, если в них не осталось файлов.
+        $this->removeEmptyLegacyRoots($io, ['Products', 'Categories', 'Users']);
+
         // Шаг 3: Обновление БД
         $io->title('Шаг 3: Обновление путей в базе данных');
         $this->updateDatabase($io);
@@ -219,6 +222,55 @@ final class MigrateUploadsCommand extends Command
         }
 
         $io->success("Обновлено: $updatedCategories категорий, $updatedImages изображений");
+    }
+
+    /**
+     * Удаляет устаревшие каталоги с заглавными буквами, если в них нет файлов.
+     *
+     * @param string[] $roots
+     */
+    private function removeEmptyLegacyRoots(SymfonyStyle $io, array $roots): void
+    {
+        foreach ($roots as $root) {
+            $path = $this->projectDir.'/public/uploads/'.$root;
+
+            if (!is_dir($path)) {
+                continue;
+            }
+
+            $hasFiles = false;
+            $directories = [];
+
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::CHILD_FIRST
+            );
+
+            foreach ($iterator as $item) {
+                if ($item->isFile()) {
+                    $hasFiles = true;
+                    break;
+                }
+
+                if ($item->isDir()) {
+                    $directories[] = $item->getPathname();
+                }
+            }
+
+            if ($hasFiles) {
+                $io->warning("Каталог $root содержит файлы и не был удалён");
+
+                continue;
+            }
+
+            foreach ($directories as $directory) {
+                @rmdir($directory);
+            }
+
+            if (@rmdir($path)) {
+                $io->writeln("  ✓ Удалён устаревший каталог uploads/$root");
+            }
+        }
     }
 
     private function buildHashPath(string $contentHash): string

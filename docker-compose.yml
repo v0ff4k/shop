@@ -13,9 +13,9 @@ version: '3.3'
 #   - туннелирование через SSH
 
 services:
-    # Nginx - веб сервер
+    # Nginx - веб сервер ВНИМАНИЕ, на ПРОД только 1.30+
     nginx:
-        image: nginx:1.25-alpine
+        image: nginx:latest
         container_name: shop_nginx
         ports:
             - "8042:80"  # внешний порт - должен быть уникален !
@@ -34,7 +34,7 @@ services:
                 max-size: "10m"
                 max-file: "3"
 
-    # PHP-FPM
+    # PHP-FPM  ВНИМАНИЕ на ПРОД только  8.2.35+
     php:
         build:
             context: ./docker/php
